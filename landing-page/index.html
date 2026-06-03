@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>WindSense AI — Reliability Intelligence Platform for Wind Operators</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* ─── Tokens ──────────────────────────────────────────────────── */
+    :root{
+      --navy:      #09192A;
+      --navy-mid:  #0F2337;
+      --steel:     #1A3A5C;
+      --slate:     #2B5278;
+      --teal:      #0A8C7C;
+      --teal-b:    #0DB39E;
+      --teal-dim:  rgba(13,179,158,.12);
+      --green:     #16A34A;
+      --green-l:   #22C55E;
+      --amber:     #D97706;
+      --red:       #DC2626;
+      --g50:       #F8FAFC;
+      --g100:      #F1F5F9;
+      --g200:      #E2E8F0;
+      --g300:      #CBD5E1;
+      --g400:      #94A3B8;
+      --g500:      #64748B;
+      --g700:      #334155;
+      --g900:      #0F172A;
+      --white:     #FFFFFF;
+      --r:         8px;
+      --shadow:    0 1px 4px rgba(0,0,0,.07),0 6px 20px rgba(0,0,0,.06);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,.13);
+      --f-main:    'Inter',sans-serif;
+      --f-mono:    'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:var(--f-main);color:var(--g700);background:var(--white);-webkit-font-smoothing:antialiased;line-height:1.6}
+    img,svg{display:block;max-width:100%}
+    a{text-decoration:none;color:inherit}
+
+    /* ─── Utilities ───────────────────────────────────────────────── */
+    .wrap{max-width:1160px;margin:0 auto;padding:0 28px}
+    .mono{font-family:var(--f-mono)}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:6px;
+      font-family:var(--f-mono);font-size:11px;font-weight:500;
+      text-transform:uppercase;letter-spacing:.1em;
+      color:var(--teal-b);background:rgba(13,179,158,.1);
+      border:1px solid rgba(13,179,158,.22);
+      padding:4px 12px;border-radius:4px;margin-bottom:14px
+    }
+    .section-eyebrow{
+      font-family:var(--f-mono);font-size:11px;font-weight:500;
+      text-transform:uppercase;letter-spacing:.12em;
+      color:var(--g400);display:block;margin-bottom:10px
+    }
+    h2.section-title{
+      font-size:clamp(28px,3.5vw,44px);font-weight:800;
+      color:var(--navy);line-height:1.18;letter-spacing:-.02em;
+      margin-bottom:16px
+    }
+    h2.section-title-light{
+      font-size:clamp(28px,3.5vw,44px);font-weight:800;
+      color:var(--white);line-height:1.18;letter-spacing:-.02em;
+      margin-bottom:16px
+    }
+    .section-intro{font-size:17px;color:var(--g500);line-height:1.75;max-width:600px}
+    .section-intro-light{font-size:17px;color:rgba(255,255,255,.6);line-height:1.75;max-width:600px}
+
+    /* Buttons */
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:13px 26px;border-radius:var(--r);font-size:15px;
+      font-weight:600;cursor:pointer;border:none;transition:.2s
+    }
+    .btn-primary{background:var(--teal);color:var(--white)}
+    .btn-primary:hover{background:var(--teal-b);transform:translateY(-1px);box-shadow:0 6px 24px rgba(13,179,158,.35)}
+    .btn-secondary{background:transparent;color:var(--white);border:1.5px solid rgba(255,255,255,.3)}
+    .btn-secondary:hover{border-color:rgba(255,255,255,.7);background:rgba(255,255,255,.07)}
+    .btn-outline{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+    .btn-outline:hover{background:var(--teal);color:var(--white)}
+    .btn-dark{background:var(--navy);color:var(--white)}
+    .btn-dark:hover{background:var(--steel)}
+
+    /* Reveal */
+    .rev{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+    .rev.in{opacity:1;transform:none}
+
+    /* ─── NAV ─────────────────────────────────────────────────────── */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:200;
+      background:rgba(9,25,42,.93);backdrop-filter:blur(14px);
+      border-bottom:1px solid rgba(255,255,255,.07)
+    }
+    .nav-wrap{
+      display:flex;align-items:center;justify-content:space-between;
+      height:66px
+    }
+    .logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;color:var(--white)}
+    .logo span{color:var(--teal-b)}
+    .nav-links{display:flex;gap:30px;list-style:none}
+    .nav-links a{font-size:14px;font-weight:500;color:rgba(255,255,255,.65);transition:.2s}
+    .nav-links a:hover{color:var(--white)}
+    .nav-actions{display:flex;gap:10px}
+    .nav-actions .btn{padding:9px 20px;font-size:14px}
+
+    /* ─── HERO ────────────────────────────────────────────────────── */
+    #hero{
+      position:relative;min-height:100vh;
+      display:flex;align-items:center;
+      overflow:hidden;padding:120px 0 80px
+    }
+    /* Sky gradient */
+    .hero-bg{
+      position:absolute;inset:0;
+      background:linear-gradient(175deg,#061524 0%,#0C2340 45%,#0F3358 70%,#0d2e4a 100%)
+    }
+    /* Subtle grid overlay */
+    .hero-grid{
+      position:absolute;inset:0;
+      background-image:
+        linear-gradient(rgba(13,179,158,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(13,179,158,.04) 1px,transparent 1px);
+      background-size:72px 72px
+    }
+    /* Horizon glow */
+    .hero-horizon{
+      position:absolute;bottom:0;left:0;right:0;height:200px;
+      background:linear-gradient(to top,rgba(10,140,124,.12),transparent)
+    }
+    /* Radial glow top-right */
+    .hero-glow{
+      position:absolute;top:-180px;right:-80px;
+      width:680px;height:680px;border-radius:50%;
+      background:radial-gradient(circle,rgba(13,179,158,.09) 0%,transparent 68%)
+    }
+
+    /* Wind turbine SVG scene */
+    .turbine-scene{
+      position:absolute;bottom:0;left:0;right:0;
+      height:75%;pointer-events:none;
+      display:flex;align-items:flex-end;justify-content:center;
+      gap:0
+    }
+
+    /* Data overlay dots */
+    .data-dot{
+      position:absolute;width:6px;height:6px;border-radius:50%;
+      background:var(--teal-b);opacity:.5;
+      animation:data-pulse 3s ease-in-out infinite
+    }
+    @keyframes data-pulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.2;transform:scale(1.3)}}
+
+    /* Scan line effect */
+    .scan-line{
+      position:absolute;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(13,179,158,.35),transparent);
+      animation:scan 6s linear infinite
+    }
+    @keyframes scan{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:.6}100%{top:100%;opacity:0}}
+
+    /* Blade rotation */
+    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    .turbine-blades{transform-origin:50% 50%;animation:spin 8s linear infinite}
+    .turbine-blades-slow{transform-origin:50% 50%;animation:spin 12s linear infinite}
+    .turbine-blades-vslow{transform-origin:50% 50%;animation:spin 18s linear infinite}
+
+    .hero-inner{
+      position:relative;max-width:760px
+    }
+    .hero-inner h1{
+      font-size:clamp(34px,5vw,62px);font-weight:800;color:var(--white);
+      line-height:1.12;letter-spacing:-.025em;margin-bottom:22px
+    }
+    .hero-inner h1 em{
+      font-style:normal;
+      background:linear-gradient(135deg,var(--teal-b) 0%,#5ECFCA 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text
+    }
+    .hero-sub{
+      font-size:18px;color:rgba(255,255,255,.7);line-height:1.7;
+      margin-bottom:36px;max-width:640px
+    }
+    .hero-sub strong{color:rgba(255,255,255,.9)}
+    .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:52px}
+    .hero-proof{
+      display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+      padding-top:32px;border-top:1px solid rgba(255,255,255,.1)
+    }
+    .hp-item .num{font-size:24px;font-weight:800;color:var(--white);font-family:var(--f-mono)}
+    .hp-item .lbl{font-size:12px;color:rgba(255,255,255,.45);margin-top:2px}
+    .hp-div{width:1px;height:38px;background:rgba(255,255,255,.12)}
+
+    /* Live badge */
+    .live-badge{
+      display:inline-flex;align-items:center;gap:7px;
+      font-family:var(--f-mono);font-size:11px;color:rgba(255,255,255,.5);
+      margin-bottom:20px
+    }
+    .live-dot{
+      width:7px;height:7px;border-radius:50%;background:var(--green-l);
+      box-shadow:0 0 8px var(--green-l);
+      animation:pulse-dot 2s ease-in-out infinite
+    }
+    @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+
+    /* ─── PAIN SECTION ────────────────────────────────────────────── */
+    #pain{padding:96px 0;background:var(--g50);border-top:1px solid var(--g200)}
+    .pain-header{text-align:center;margin-bottom:64px}
+    .pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+    .pain-card{
+      background:var(--white);border:1px solid var(--g200);
+      border-radius:12px;padding:36px;
+      border-top:3px solid transparent;
+      transition:.25s
+    }
+    .pain-card:hover{box-shadow:var(--shadow-lg);border-top-color:var(--teal);transform:translateY(-3px)}
+    .pain-num{
+      font-family:var(--f-mono);font-size:11px;font-weight:600;
+      text-transform:uppercase;letter-spacing:.1em;
+      color:var(--teal-b);margin-bottom:16px;display:block
+    }
+    .pain-icon{
+      width:52px;height:52px;border-radius:12px;
+      background:rgba(13,179,158,.09);border:1px solid rgba(13,179,158,.18);
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:20px
+    }
+    .pain-card h3{font-size:19px;font-weight:700;color:var(--navy);margin-bottom:12px;line-height:1.3}
+    .pain-card p{font-size:14px;color:var(--g500);line-height:1.8}
+    .pain-card ul{margin-top:16px;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+    .pain-card ul li{
+      font-size:13px;color:var(--g500);padding-left:18px;
+      position:relative;line-height:1.6
+    }
+    .pain-card ul li::before{
+      content:'→';position:absolute;left:0;
+      color:var(--teal-b);font-weight:600;font-size:12px
+    }
+    .pain-stat{
+      margin-top:20px;padding:12px 14px;
+      background:rgba(13,179,158,.06);border-radius:6px;
+      font-family:var(--f-mono);font-size:11px;
+      font-weight:600;color:var(--teal)
+    }
+
+    /* ─── VALUE PROPOSITION ───────────────────────────────────────── */
+    #value{padding:100px 0;background:var(--navy)}
+    .value-header{text-align:center;margin-bottom:64px}
+    .value-statement{
+      max-width:800px;margin:24px auto 64px;
+      font-size:17px;color:rgba(255,255,255,.6);line-height:1.8;
+      text-align:center
+    }
+    .value-statement strong{color:rgba(255,255,255,.9)}
+    .value-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:rgba(255,255,255,.05);border-radius:12px;overflow:hidden}
+    .value-card{
+      background:var(--navy-mid);padding:36px 28px;
+      transition:.2s;cursor:default
+    }
+    .value-card:hover{background:rgba(26,58,92,.5)}
+    .value-card-icon{
+      width:44px;height:44px;border-radius:10px;
+      background:rgba(13,179,158,.1);border:1px solid rgba(13,179,158,.2);
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:20px
+    }
+    .value-card h3{font-size:16px;font-weight:700;color:var(--white);margin-bottom:10px;line-height:1.3}
+    .value-card p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7}
+
+    /* ─── FEATURES ────────────────────────────────────────────────── */
+    #features{padding:100px 0;background:var(--white)}
+    .features-header{text-align:center;margin-bottom:60px}
+    .features-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:20px
+    }
+    .feat-card{
+      border:1px solid var(--g200);border-radius:10px;
+      padding:28px;transition:.2s;
+      display:flex;flex-direction:column;gap:14px
+    }
+    .feat-card:hover{box-shadow:var(--shadow);border-color:rgba(13,179,158,.3)}
+    .feat-icon{
+      width:42px;height:42px;border-radius:10px;
+      background:rgba(13,179,158,.08);border:1px solid rgba(13,179,158,.15);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0
+    }
+    .feat-card h3{font-size:15px;font-weight:700;color:var(--navy)}
+    .feat-card p{font-size:13px;color:var(--g500);line-height:1.7}
+    .feat-tag{
+      display:inline-flex;align-items:center;
+      font-family:var(--f-mono);font-size:10px;font-weight:600;
+      color:var(--teal);background:rgba(10,140,124,.08);
+      border:1px solid rgba(10,140,124,.15);
+      padding:3px 9px;border-radius:4px;
+      align-self:flex-start;margin-top:auto
+    }
+
+    /* ─── COMPARISON TABLE ────────────────────────────────────────── */
+    #compare{padding:100px 0;background:var(--g50)}
+    .compare-header{text-align:center;margin-bottom:56px}
+    .compare-table-wrap{
+      border:1px solid var(--g200);border-radius:12px;overflow:hidden;
+      box-shadow:var(--shadow)
+    }
+    .compare-table{width:100%;border-collapse:collapse}
+    .compare-table th{
+      padding:18px 24px;text-align:left;
+      font-size:13px;font-weight:700;text-transform:uppercase;
+      letter-spacing:.06em
+    }
+    .compare-table th:first-child{
+      background:var(--g50);color:var(--g500);width:30%
+    }
+    .th-ws{
+      background:var(--navy);color:var(--white);
+      border-bottom:2px solid var(--teal)
+    }
+    .th-oem{background:var(--g100);color:var(--g500)}
+    .compare-table td{
+      padding:16px 24px;font-size:14px;
+      border-top:1px solid var(--g200)
+    }
+    .compare-table tr:hover td{background:rgba(13,179,158,.03)}
+    .td-label{font-weight:600;color:var(--g700)}
+    .td-ws{background:rgba(9,25,42,.02)}
+    .check{color:var(--green);font-weight:700;font-size:16px}
+    .cross{color:var(--g300);font-size:16px}
+    .badge-ws{
+      display:inline-flex;align-items:center;gap:5px;
+      background:rgba(22,163,74,.1);color:var(--green);
+      border:1px solid rgba(22,163,74,.2);
+      font-size:12px;font-weight:600;padding:3px 10px;border-radius:4px
+    }
+    .badge-oem{
+      display:inline-flex;align-items:center;gap:5px;
+      background:var(--g100);color:var(--g400);
+      border:1px solid var(--g200);
+      font-size:12px;font-weight:600;padding:3px 10px;border-radius:4px
+    }
+
+    /* ─── CREDIBILITY ─────────────────────────────────────────────── */
+    #cred{padding:96px 0;background:var(--white)}
+    .cred-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+    .cred-text .section-eyebrow{margin-bottom:10px}
+    .cred-text p{font-size:15px;color:var(--g500);line-height:1.8;margin-bottom:16px}
+    .cred-pillars{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+    .cred-pillar{
+      display:flex;align-items:flex-start;gap:14px;
+      padding:16px;border:1px solid var(--g200);border-radius:8px;
+      background:var(--g50)
+    }
+    .cred-pillar-dot{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--teal);flex-shrink:0;margin-top:5px
+    }
+    .cred-pillar strong{font-size:14px;color:var(--navy);display:block;margin-bottom:3px}
+    .cred-pillar span{font-size:13px;color:var(--g500)}
+    .cred-logos{
+      display:grid;grid-template-columns:repeat(2,1fr);gap:16px
+    }
+    .cred-logo-card{
+      border:1px solid var(--g200);border-radius:10px;
+      padding:28px 20px;text-align:center;
+      background:var(--g50);transition:.2s
+    }
+    .cred-logo-card:hover{border-color:var(--teal);box-shadow:0 4px 16px rgba(13,179,158,.1)}
+    .cred-logo-icon{
+      width:56px;height:56px;border-radius:12px;
+      background:var(--navy);display:flex;align-items:center;
+      justify-content:center;margin:0 auto 14px
+    }
+    .cred-logo-card strong{display:block;font-size:14px;color:var(--navy);margin-bottom:4px}
+    .cred-logo-card span{font-size:12px;color:var(--g400)}
+    .geo-strip{
+      margin-top:36px;padding:16px 20px;
+      background:rgba(13,179,158,.06);border:1px solid rgba(13,179,158,.15);
+      border-radius:8px;
+      font-size:13px;color:var(--g500)
+    }
+    .geo-strip strong{color:var(--teal)}
+
+    /* ─── PRICING ─────────────────────────────────────────────────── */
+    #pricing{padding:100px 0;background:var(--navy)}
+    .pricing-header{text-align:center;margin-bottom:56px}
+    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+    .price-card{
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:12px;padding:36px;
+      transition:.2s;position:relative
+    }
+    .price-card.featured{
+      background:var(--white);
+      border-color:var(--teal);
+      box-shadow:0 12px 48px rgba(13,179,158,.25)
+    }
+    .price-pop{
+      position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+      background:var(--teal);color:var(--white);
+      font-size:11px;font-weight:700;letter-spacing:.06em;
+      text-transform:uppercase;padding:4px 14px;border-radius:20px
+    }
+    .price-tier{
+      font-family:var(--f-mono);font-size:11px;font-weight:600;
+      text-transform:uppercase;letter-spacing:.1em;
+      color:var(--teal-b);margin-bottom:8px
+    }
+    .price-card.featured .price-tier{color:var(--teal)}
+    .price-num{
+      font-family:var(--f-mono);font-size:40px;font-weight:700;
+      color:var(--white);margin-bottom:4px;line-height:1
+    }
+    .price-card.featured .price-num{color:var(--navy)}
+    .price-per{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:6px}
+    .price-card.featured .price-per{color:var(--g500)}
+    .price-desc{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;line-height:1.6}
+    .price-card.featured .price-desc{color:var(--g500)}
+    .price-ul{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+    .price-ul li{
+      font-size:13px;color:rgba(255,255,255,.75);
+      display:flex;align-items:flex-start;gap:9px
+    }
+    .price-card.featured .price-ul li{color:var(--g700)}
+    .price-ul li .ck{
+      color:var(--green-l);font-weight:700;flex-shrink:0;margin-top:1px
+    }
+    .price-card.featured .price-ul li .ck{color:var(--green)}
+    .price-note{
+      margin-top:12px;padding:12px 14px;
+      background:rgba(13,179,158,.06);border:1px solid rgba(13,179,158,.12);
+      border-radius:6px;font-size:11px;
+      font-family:var(--f-mono);color:var(--teal-b)
+    }
+    .price-card.featured .price-note{background:rgba(10,140,124,.08);border-color:rgba(10,140,124,.2);color:var(--teal)}
+    .ps-note{
+      margin-top:36px;text-align:center;
+      font-size:14px;color:rgba(255,255,255,.5)
+    }
+    .ps-note strong{color:rgba(255,255,255,.8)}
+    .ps-services{
+      display:grid;grid-template-columns:repeat(2,1fr);gap:14px;
+      margin-top:20px
+    }
+    .ps-card{
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+      border-radius:8px;padding:18px;text-align:left
+    }
+    .ps-card strong{font-size:13px;color:rgba(255,255,255,.8);display:block;margin-bottom:4px}
+    .ps-card span{font-size:12px;color:rgba(255,255,255,.4)}
+
+    /* ─── FINAL CTA ───────────────────────────────────────────────── */
+    #final-cta{
+      padding:100px 0;background:var(--g50);
+      text-align:center;border-top:1px solid var(--g200)
+    }
+    #final-cta h2{
+      font-size:clamp(30px,4vw,52px);font-weight:800;
+      color:var(--navy);letter-spacing:-.02em;line-height:1.15;
+      margin-bottom:18px
+    }
+    #final-cta p{
+      font-size:17px;color:var(--g500);max-width:540px;
+      margin:0 auto 36px;line-height:1.7
+    }
+    .cta-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+    .contact-detail{
+      margin-top:32px;font-size:13px;color:var(--g400);
+      font-family:var(--f-mono)
+    }
+    .contact-detail a{color:var(--teal);text-decoration:underline;text-underline-offset:3px}
+
+    /* ─── FOOTER ──────────────────────────────────────────────────── */
+    footer{background:var(--g900);border-top:1px solid rgba(255,255,255,.06);padding:56px 0 28px}
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:44px}
+    .footer-brand-text{font-size:13px;color:rgba(255,255,255,.3);line-height:1.7;max-width:240px;margin:12px 0 18px}
+    .footer-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      font-family:var(--f-mono);font-size:10px;
+      color:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.1);
+      padding:5px 10px;border-radius:4px
+    }
+    .footer-col h4{
+      font-size:11px;font-weight:700;text-transform:uppercase;
+      letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:16px
+    }
+    .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+    .footer-col ul li a{font-size:13px;color:rgba(255,255,255,.4);transition:.2s}
+    .footer-col ul li a:hover{color:rgba(255,255,255,.85)}
+    .footer-bottom{
+      display:flex;align-items:center;justify-content:space-between;
+      padding-top:24px;border-top:1px solid rgba(255,255,255,.06);
+      font-size:12px;color:rgba(255,255,255,.2)
+    }
+
+    /* ─── Responsive ──────────────────────────────────────────────── */
+    @media(max-width:960px){
+      .pain-grid,.value-grid,.pricing-grid{grid-template-columns:1fr}
+      .features-grid{grid-template-columns:repeat(2,1fr)}
+      .cred-inner{grid-template-columns:1fr}
+      .footer-grid{grid-template-columns:1fr 1fr}
+      .nav-links{display:none}
+      .compare-table{font-size:13px}
+    }
+    @media(max-width:640px){
+      .features-grid,.cred-logos,.ps-services{grid-template-columns:1fr}
+      .hero-actions,.cta-row{flex-direction:column;align-items:flex-start}
+      .cta-row{align-items:center}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ═══════════════════════════════════════════════════════════ -->
+<nav>
+  <div class="wrap nav-wrap">
+    <a href="#hero" class="logo">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="3.5" fill="#0DB39E"/>
+        <path d="M16 12.5C14 8 10 4 12 2s5 4 4 10.5Z" fill="#0DB39E" opacity=".9"/>
+        <path d="M16 12.5C20.3 10.4 25.6 10 26.8 12.5S22 16.5 16 12.5Z" fill="#0DB39E" opacity=".65"/>
+        <path d="M16 12.5C11.7 10.4 6.4 10 5.2 12.5S10 16.5 16 12.5Z" fill="#0DB39E" opacity=".45"/>
+        <circle cx="16" cy="16" r="2" fill="#09192A"/>
+      </svg>
+      Wind<span>Sense</span>&nbsp;AI
+    </a>
+    <ul class="nav-links">
+      <li><a href="#pain">The Problem</a></li>
+      <li><a href="#value">Platform</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#compare">Why WindSense</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-secondary" style="padding:9px 20px;font-size:14px">Log In</a>
+      <a href="login.html" class="btn btn-primary" style="padding:9px 20px;font-size:14px">Book a Demo</a>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ══ HERO ══════════════════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-horizon"></div>
+  <div class="scan-line"></div>
+
+  <!-- Data dots scattered -->
+  <div class="data-dot" style="top:22%;left:18%;animation-delay:.4s"></div>
+  <div class="data-dot" style="top:38%;left:72%;animation-delay:1.1s"></div>
+  <div class="data-dot" style="top:55%;left:44%;animation-delay:2.2s"></div>
+  <div class="data-dot" style="top:18%;left:61%;animation-delay:.7s"></div>
+  <div class="data-dot" style="top:62%;left:82%;animation-delay:1.8s;width:4px;height:4px"></div>
+
+  <!-- Wind turbine scene SVG -->
+  <div class="turbine-scene" aria-hidden="true">
+    <svg viewBox="0 0 1160 520" preserveAspectRatio="xMidYMax meet"
+         xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;max-height:100%;position:absolute;bottom:0">
+
+      <!-- Ground/horizon line -->
+      <rect x="0" y="490" width="1160" height="30" fill="rgba(13,179,158,.06)"/>
+      <line x1="0" y1="490" x2="1160" y2="490" stroke="rgba(13,179,158,.18)" stroke-width="1"/>
+
+      <!-- Far background turbines (very subtle) -->
+      <!-- Turbine BG-1 -->
+      <g opacity=".2" transform="translate(80,490)">
+        <rect x="-3" y="-180" width="6" height="180" fill="#0DB39E" rx="1"/>
+        <g class="turbine-blades-vslow" style="transform-origin:0px -180px">
+          <polygon points="0,-180 -5,-220 0,-260 5,-220" fill="#0DB39E" transform="rotate(0,0,-180)"/>
+          <polygon points="0,-180 -5,-220 0,-260 5,-220" fill="#0DB39E" transform="rotate(120,0,-180)"/>
+          <polygon points="0,-180 -5,-220 0,-260 5,-220" fill="#0DB39E" transform="rotate(240,0,-180)"/>
+        </g>
+      </g>
+      <!-- Turbine BG-2 -->
+      <g opacity=".18" transform="translate(220,490)">
+        <rect x="-3" y="-150" width="6" height="150" fill="#0DB39E" rx="1"/>
+        <g class="turbine-blades-vslow" style="transform-origin:0px -150px;animation-delay:-3s">
+          <polygon points="0,-150 -4,-183 0,-216 4,-183" fill="#0DB39E" transform="rotate(60,0,-150)"/>
+          <polygon points="0,-150 -4,-183 0,-216 4,-183" fill="#0DB39E" transform="rotate(180,0,-150)"/>
+          <polygon points="0,-150 -4,-183 0,-216 4,-183" fill="#0DB39E" transform="rotate(300,0,-150)"/>
+        </g>
+      </g>
+      <!-- Turbine BG-3 -->
+      <g opacity=".15" transform="translate(980,490)">
+        <rect x="-3" y="-160" width="6" height="160" fill="#0DB39E" rx="1"/>
+        <g class="turbine-blades-vslow" style="transform-origin:0px -160px;animation-delay:-7s">
+          <polygon points="0,-160 -4,-196 0,-232 4,-196" fill="#0DB39E" transform="rotate(30,0,-160)"/>
+          <polygon points="0,-160 -4,-196 0,-232 4,-196" fill="#0DB39E" transform="rotate(150,0,-160)"/>
+          <polygon points="0,-160 -4,-196 0,-232 4,-196" fill="#0DB39E" transform="rotate(270,0,-160)"/>
+        </g>
+      </g>
+      <g opacity=".15" transform="translate(1080,490)">
+        <rect x="-3" y="-130" width="6" height="130" fill="#0DB39E" rx="1"/>
+        <g class="turbine-blades-vslow" style="transform-origin:0px -130px;animation-delay:-11s">
+          <polygon points="0,-130 -3,-158 0,-186 3,-158" fill="#0DB39E" transform="rotate(10,0,-130)"/>
+          <polygon points="0,-130 -3,-158 0,-186 3,-158" fill="#0DB39E" transform="rotate(130,0,-130)"/>
+          <polygon points="0,-130 -3,-158 0,-186 3,-158" fill="#0DB39E" transform="rotate(250,0,-130)"/>
+        </g>
+      </g>
+
+      <!-- Mid turbines -->
+      <!-- Turbine M-1 -->
+      <g opacity=".38" transform="translate(360,490)">
+        <rect x="-4" y="-260" width="8" height="260" fill="#1A3A5C" rx="2"/>
+        <rect x="-12" y="-6" width="24" height="12" fill="#1A3A5C" rx="2"/>
+        <g class="turbine-blades-slow" style="transform-origin:0px -260px;animation-delay:-2s">
+          <path d="M0-260 Q-8-290 -4-320 Q0-350 4-320 Q8-290 0-260Z" fill="#2B5278"/>
+          <path d="M0-260 Q-8-290 -4-320 Q0-350 4-320 Q8-290 0-260Z" fill="#2B5278" transform="rotate(120,0,-260)"/>
+          <path d="M0-260 Q-8-290 -4-320 Q0-350 4-320 Q8-290 0-260Z" fill="#2B5278" transform="rotate(240,0,-260)"/>
+        </g>
+        <circle cx="0" cy="-260" r="4" fill="#2B5278"/>
+      </g>
+      <!-- Turbine M-2 -->
+      <g opacity=".35" transform="translate(780,490)">
+        <rect x="-4" y="-240" width="8" height="240" fill="#1A3A5C" rx="2"/>
+        <rect x="-12" y="-6" width="24" height="12" fill="#1A3A5C" rx="2"/>
+        <g class="turbine-blades-slow" style="transform-origin:0px -240px;animation-delay:-5s">
+          <path d="M0-240 Q-7-268 -3-296 Q0-324 3-296 Q7-268 0-240Z" fill="#2B5278"/>
+          <path d="M0-240 Q-7-268 -3-296 Q0-324 3-296 Q7-268 0-240Z" fill="#2B5278" transform="rotate(120,0,-240)"/>
+          <path d="M0-240 Q-7-268 -3-296 Q0-324 3-296 Q7-268 0-240Z" fill="#2B5278" transform="rotate(240,0,-240)"/>
+        </g>
+        <circle cx="0" cy="-240" r="4" fill="#2B5278"/>
+      </g>
+
+      <!-- Hero turbines (foreground, more visible) -->
+      <!-- Turbine H-1 (left, tallest) -->
+      <g transform="translate(490,490)">
+        <!-- Tower -->
+        <polygon points="-7,0 -5,-360 5,-360 7,0" fill="rgba(26,58,92,.85)" opacity=".9"/>
+        <!-- Nacelle -->
+        <rect x="-16" y="-368" width="32" height="14" rx="3" fill="rgba(26,58,92,.95)"/>
+        <!-- Blades -->
+        <g class="turbine-blades" style="transform-origin:0px -360px">
+          <path d="M0-360 C-6-388-12-410-6-430 C0-450 6-430 0-360Z" fill="rgba(30,70,110,.9)"/>
+          <path d="M0-360 C-6-388-12-410-6-430 C0-450 6-430 0-360Z" fill="rgba(30,70,110,.9)" transform="rotate(120,0,-360)"/>
+          <path d="M0-360 C-6-388-12-410-6-430 C0-450 6-430 0-360Z" fill="rgba(30,70,110,.9)" transform="rotate(240,0,-360)"/>
+        </g>
+        <!-- Hub -->
+        <circle cx="0" cy="-360" r="7" fill="rgba(43,82,120,.95)"/>
+        <!-- Base foundation -->
+        <rect x="-14" y="-6" width="28" height="10" rx="2" fill="rgba(20,44,72,.8)"/>
+        <!-- Subtle data overlay: pulsing ring at hub -->
+        <circle cx="0" cy="-360" r="18" fill="none" stroke="rgba(13,179,158,.15)" stroke-width="1">
+          <animate attributeName="r" values="12;22;12" dur="3s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".4;0;.4" dur="3s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+
+      <!-- Turbine H-2 (right) -->
+      <g transform="translate(720,490)">
+        <polygon points="-6,0 -4,-310 4,-310 6,0" fill="rgba(26,58,92,.75)"/>
+        <rect x="-14" y="-318" width="28" height="12" rx="2" fill="rgba(26,58,92,.85)"/>
+        <g class="turbine-blades" style="transform-origin:0px -310px;animation-delay:-1.5s">
+          <path d="M0-310 C-5-334-10-354-5-372 C0-390 5-372 0-310Z" fill="rgba(26,58,92,.85)"/>
+          <path d="M0-310 C-5-334-10-354-5-372 C0-390 5-372 0-310Z" fill="rgba(26,58,92,.85)" transform="rotate(120,0,-310)"/>
+          <path d="M0-310 C-5-334-10-354-5-372 C0-390 5-372 0-310Z" fill="rgba(26,58,92,.85)" transform="rotate(240,0,-310)"/>
+        </g>
+        <circle cx="0" cy="-310" r="6" fill="rgba(40,76,114,.9)"/>
+        <rect x="-12" y="-5" width="24" height="9" rx="2" fill="rgba(20,44,72,.7)"/>
+      </g>
+
+      <!-- Subtle connection lines between turbines (data mesh) -->
+      <line x1="490" y1="130" x2="720" y2="182" stroke="rgba(13,179,158,.08)" stroke-width="1" stroke-dasharray="4 6"/>
+      <line x1="360" y1="232" x2="490" y2="130" stroke="rgba(13,179,158,.06)" stroke-width="1" stroke-dasharray="3 5"/>
+      <line x1="720" y1="182" x2="780" y2="252" stroke="rgba(13,179,158,.06)" stroke-width="1" stroke-dasharray="3 5"/>
+
+      <!-- Data readout labels (subtle overlay feel) -->
+      <g opacity=".55">
+        <!-- T-01 label -->
+        <rect x="506" y="118" width="72" height="22" rx="3" fill="rgba(9,25,42,.7)" stroke="rgba(13,179,158,.3)" stroke-width="1"/>
+        <text x="542" y="133" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#0DB39E" font-weight="500">T-01 · 87%</text>
+        <!-- T-02 label -->
+        <rect x="736" y="170" width="72" height="22" rx="3" fill="rgba(9,25,42,.7)" stroke="rgba(13,179,158,.3)" stroke-width="1"/>
+        <text x="772" y="185" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#0DB39E" font-weight="500">T-02 · 92%</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Hero content -->
+  <div class="wrap">
+    <div class="hero-inner rev">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        OEM-Agnostic · ISO 13381-aligned · SCADA-native
+      </div>
+      <h1>The <em>OEM-Agnostic</em><br/>Reliability Intelligence<br/>Platform for Wind Turbines</h1>
+      <p class="hero-sub">
+        <strong>ML-based fault detection</strong> + <strong>FMECA risk ranking</strong> +
+        <strong>Remaining Useful Life</strong> + unified mixed-fleet visibility —
+        built for post-warranty and mid-tier operators.
+      </p>
+      <div class="hero-actions">
+        <a href="login.html" class="btn btn-primary" style="padding:15px 30px;font-size:16px">
+          <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M2 6h12" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="10" r="1.5" fill="currentColor"/></svg>
+          Book a Demo
+        </a>
+        <a href="#" class="btn btn-secondary" style="padding:15px 30px;font-size:16px">
+          <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M8 2v8M5 7l3 3 3-3M3 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download Product Overview
+        </a>
+      </div>
+      <div class="hero-proof">
+        <div class="hp-item">
+          <div class="num">18–45</div>
+          <div class="lbl">Days early fault warning</div>
+        </div>
+        <div class="hp-div"></div>
+        <div class="hp-item">
+          <div class="num">€400K</div>
+          <div class="lbl">Avg. gearbox failure cost</div>
+        </div>
+        <div class="hp-div"></div>
+        <div class="hp-item">
+          <div class="num">40 GW+</div>
+          <div class="lbl">Exiting OEM warranty by 2027</div>
+        </div>
+        <div class="hp-div"></div>
+        <div class="hp-item">
+          <div class="num">€4B+</div>
+          <div class="lbl">Avoidable annual downtime cost</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ PAIN ═══════════════════════════════════════════════════════════ -->
+<section id="pain">
+  <div class="wrap">
+    <div class="pain-header rev">
+      <span class="section-eyebrow">The Market Problem</span>
+      <h2 class="section-title">Three problems enterprise APM<br/>tools were never built to solve</h2>
+      <p class="section-intro" style="margin:0 auto">Europe has 230+ GW of installed wind capacity. 40–60 GW is exiting OEM warranty right now. The enterprise solutions built for large, single-OEM, in-warranty fleets structurally cannot serve this market.</p>
+    </div>
+    <div class="pain-grid">
+
+      <!-- Pain 1 -->
+      <div class="pain-card rev">
+        <span class="pain-num">Pain 01</span>
+        <div class="pain-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7v10l10 5 10-5V7L12 2Z" stroke="#0DB39E" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 12v5M12 7v2" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>The Post-Warranty Crisis</h3>
+        <p>Thousands of European turbines are simultaneously exiting OEM monitoring contracts in 2025–2026. Standard RM&D service agreements run 5–10 years — and that clock started between 2010 and 2016.</p>
+        <ul>
+          <li>OEM monitoring renewals cost €80–120/turbine/month and escalate significantly post-warranty</li>
+          <li>The same OEM quoting your renewal is quoting you a new turbine</li>
+          <li>Operators must choose: pay the OEM premium, or fly blind</li>
+        </ul>
+        <div class="pain-stat">40 GW+ exiting OEM warranty across Europe by 2027</div>
+      </div>
+
+      <!-- Pain 2 -->
+      <div class="pain-card rev" style="transition-delay:.1s">
+        <span class="pain-num">Pain 02</span>
+        <div class="pain-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#0DB39E" stroke-width="1.5"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#0DB39E" stroke-width="1.5" opacity=".5"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#0DB39E" stroke-width="1.5" opacity=".5"/>
+            <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#0DB39E" stroke-width="1.5"/>
+            <path d="M10 6.5h4M6.5 10v4M17.5 10v4" stroke="#0DB39E" stroke-width="1" stroke-dasharray="2 2" opacity=".5"/>
+          </svg>
+        </div>
+        <h3>Mixed-Fleet Blindness</h3>
+        <p>An IPP that has grown through acquisition operates Vestas, GE, and Enercon turbines — and runs three separate monitoring portals. No OEM will give a competitor's turbines visibility in their platform.</p>
+        <ul>
+          <li>Three monitoring portals, three alert systems, three maintenance workflows</li>
+          <li>No unified fleet health view across turbine manufacturers</li>
+          <li>No cross-turbine risk ranking — no single source of truth</li>
+        </ul>
+        <div class="pain-stat">60% of mid-tier IPPs operate turbines from 2 or more OEMs</div>
+      </div>
+
+      <!-- Pain 3 -->
+      <div class="pain-card rev" style="transition-delay:.2s">
+        <span class="pain-num">Pain 03</span>
+        <div class="pain-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="#0DB39E" stroke-width="1.5"/>
+            <path d="M8 12l3 3 5-5" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+          </svg>
+        </div>
+        <h3>Prediction Without Prioritisation</h3>
+        <p>Most PdM tools answer one question: "Is something wrong with this turbine?" Almost none answer the operational question maintenance engineers actually need answered.</p>
+        <ul>
+          <li>"Given 14 active alerts across my 60-turbine fleet — what do I fix first?"</li>
+          <li>"With which crew, in what sequence, before Thursday's weather window?"</li>
+          <li>Alert volume without rank order is noise, not intelligence</li>
+        </ul>
+        <div class="pain-stat">Risk-ranked prioritisation reduces crew mobilisation cost by 20–35%</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ VALUE PROPOSITION ══════════════════════════════════════════════ -->
+<section id="value">
+  <div class="wrap">
+    <div class="value-header rev">
+      <div class="eyebrow">Platform Positioning</div>
+      <h2 class="section-title-light">Not Predictive Maintenance.<br/>A Reliability &amp; Risk-Ranked<br/>Decision Engine.</h2>
+      <p class="value-statement">
+        WindSense AI is the <strong>independent, OEM-agnostic Reliability Intelligence Platform</strong> for
+        mid-tier wind operators — combining ML-based fault detection with risk-ranked maintenance
+        prioritisation, built specifically for <strong>mixed-fleet and post-warranty operators</strong>
+        at a price point enterprise APM tools cannot match.
+      </p>
+    </div>
+    <div class="value-grid rev" style="transition-delay:.1s">
+
+      <div class="value-card">
+        <div class="value-card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="#0DB39E" stroke-width="1.5"/>
+            <path d="M7 11l3 3 5-5" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>OEM-Agnostic</h3>
+        <p>Connects to any SCADA historian. Works with Vestas, GE, Enercon, Nordex, Siemens Gamesa — simultaneously. No OEM involvement required after initial setup.</p>
+      </div>
+
+      <div class="value-card">
+        <div class="value-card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="2" y="2" width="8" height="8" rx="1.5" stroke="#0DB39E" stroke-width="1.5"/>
+            <rect x="12" y="2" width="8" height="8" rx="1.5" stroke="#0DB39E" stroke-width="1.5"/>
+            <rect x="2" y="12" width="8" height="8" rx="1.5" stroke="#0DB39E" stroke-width="1.5"/>
+            <rect x="12" y="12" width="8" height="8" rx="1.5" stroke="#0DB39E" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <h3>Mixed-Fleet Unified Dashboard</h3>
+        <p>One login. All turbines. All manufacturers. One risk-ranked fleet health view. No more switching between three OEM portals and losing the cross-turbine picture.</p>
+      </div>
+
+      <div class="value-card">
+        <div class="value-card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M3 15l5-5 4 4 7-8" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="16" cy="6" r="3" stroke="#0DB39E" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <h3>ML + FMECA Risk Ranking</h3>
+        <p>Every alert is scored across Failure Probability × Consequence Severity (FMECA) × Detectability — producing a fleet-wide Risk Priority Number. Not just alerts — ranked decisions.</p>
+      </div>
+
+      <div class="value-card">
+        <div class="value-card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M11 2v3M11 17v3M2 11h3M17 11h3" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="11" cy="11" r="5" stroke="#0DB39E" stroke-width="1.5"/>
+            <circle cx="11" cy="11" r="2" fill="#0DB39E" opacity=".4"/>
+          </svg>
+        </div>
+        <h3>Affordable for Mid-Tier IPPs</h3>
+        <p>From €49/turbine/month — 40–60% below OEM monitoring contracts. A 50-turbine fleet breaks even on the subscription by preventing less than one major failure per year.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ FEATURES ═══════════════════════════════════════════════════════ -->
+<section id="features">
+  <div class="wrap">
+    <div class="features-header rev">
+      <span class="section-eyebrow">Core Capabilities</span>
+      <h2 class="section-title">Engineering-grade intelligence.<br/>Not a black box.</h2>
+      <p class="section-intro" style="margin:0 auto">Every alert in WindSense AI is traceable to a failure mode, a sensor signature, and a consequence class. Engineers can defend every recommendation to management, auditors, and technical reviewers.</p>
+    </div>
+    <div class="features-grid rev" style="transition-delay:.1s">
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M2 14l4-5 3 3 4-6 4 3" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="15" cy="4" r="2.5" stroke="#0DB39E" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <h3>Fault Prediction Engine</h3>
+        <p>XGBoost/Random Forest ML models trained on SCADA time-series data. Detects developing faults 18–45 days before failure with 90%+ confidence thresholds.</p>
+        <span class="feat-tag">ML · Anomaly Detection</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2L3 6v8l7 4 7-4V6L10 2Z" stroke="#0DB39E" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M10 10v4M10 6v1" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>Failure Mode Classification</h3>
+        <p>Classifies alerts to specific component failure modes — gearbox bearing wear, generator winding degradation, hydraulic seal failure, transformer thermal overload — not generic anomalies.</p>
+        <span class="feat-tag">FMECA · Failure Mode Library</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="7" stroke="#0DB39E" stroke-width="1.5"/>
+            <path d="M10 6v4l3 3" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>Remaining Useful Life (RUL)</h3>
+        <p>Per-component RUL estimation for gearbox, main bearing, generator, and pitch system. Gives operators a planning horizon — "38 days before this component requires intervention."</p>
+        <span class="feat-tag">Prognostics · Planning</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="2" width="7" height="7" rx="1" stroke="#0DB39E" stroke-width="1.5"/>
+            <rect x="11" y="2" width="7" height="7" rx="1" stroke="#0DB39E" stroke-width="1.5" opacity=".5"/>
+            <rect x="2" y="11" width="7" height="7" rx="1" stroke="#0DB39E" stroke-width="1.5" opacity=".5"/>
+            <rect x="11" y="11" width="7" height="7" rx="1" stroke="#0DB39E" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <h3>FMECA Risk Ranking</h3>
+        <p>Dynamic Risk Priority Number (RPN) = Probability × Consequence × Detectability. Ranks every active alert across the fleet so your engineer knows what to action before the next weather window.</p>
+        <span class="feat-tag">Risk Matrix · RPN Queue</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M3 10h14M3 5h6M3 15h6" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="14" cy="7" r="3" stroke="#0DB39E" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <h3>Mixed-Fleet Unified Dashboard</h3>
+        <p>One dashboard across all turbine OEMs. Normalisation Engine maps every SCADA tag to a canonical schema — no manual data cleaning, no OEM login, no juggling portals.</p>
+        <span class="feat-tag">Multi-OEM · Normalisation</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M4 15l4-6 3 4 2-3 4 5" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="2" y="2" width="16" height="16" rx="2" stroke="#0DB39E" stroke-width="1.5" opacity=".3"/>
+          </svg>
+        </div>
+        <h3>SHAP Explainability Panel</h3>
+        <p>Every fault prediction shows the exact SCADA signals driving it — oil temperature trend, vibration frequency, thermal asymmetry — ranked by contribution. Builds trust with operators and technical reviewers.</p>
+        <span class="feat-tag">SHAP · Explainable AI</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2L4 5v7c0 4 3.3 7.3 6 8 2.7-.7 6-4 6-8V5L10 2Z" stroke="#0DB39E" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M7 10l2 2 4-4" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>Asset Health Certificates</h3>
+        <p>Structured, SHA-256-sealed PDF reports per turbine — ML health scores, component-level risk breakdowns, RUL ranges, data provenance, model traceability and an explicit limitations statement. Engineering decision-support for asset managers and technical reviewers.</p>
+        <span class="feat-tag">SHA-256 Sealed · PDF Export</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="5" width="14" height="11" rx="1.5" stroke="#0DB39E" stroke-width="1.5"/>
+            <path d="M7 5V4a1 1 0 012 0v1M11 5V4a1 1 0 012 0v1" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M6 10h8M6 13h5" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+          </svg>
+        </div>
+        <h3>Work Order Recommendations</h3>
+        <p>Fault predictions automatically generate prioritised maintenance recommendations — component, urgency, estimated crew time, and exportable to your CMMS workflow.</p>
+        <span class="feat-tag">CMMS Export</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M2 12l4-4 3 3 4-5 5 4" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="2" y="3" width="16" height="14" rx="1.5" stroke="#0DB39E" stroke-width="1.5" opacity=".3"/>
+          </svg>
+        </div>
+        <h3>SCADA Trend Explorer</h3>
+        <p>10-minute resolution SCADA time-series visualisation per turbine and per sensor channel — with fault event overlays, baseline envelopes, and anomaly flagging directly on the trend line.</p>
+        <span class="feat-tag">10-min Resolution · Trend Analysis</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ COMPARISON ═════════════════════════════════════════════════════ -->
+<section id="compare">
+  <div class="wrap">
+    <div class="compare-header rev">
+      <span class="section-eyebrow">The WindSense Advantage</span>
+      <h2 class="section-title">OEM monitoring wasn't built<br/>for your situation.</h2>
+      <p class="section-intro" style="margin:0 auto">OEM tools are built to support in-warranty, single-manufacturer fleets. WindSense AI is built for the operators those tools structurally exclude.</p>
+    </div>
+    <div class="compare-table-wrap rev" style="transition-delay:.1s">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th class="th-ws">
+              <div style="display:flex;align-items:center;gap:8px">
+                <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="3.5" fill="#0DB39E"/><path d="M16 12.5C14 8 10 4 12 2s5 4 4 10.5Z" fill="#0DB39E" opacity=".9"/><path d="M16 12.5C20.3 10.4 25.6 10 26.8 12.5S22 16.5 16 12.5Z" fill="#0DB39E" opacity=".65"/><path d="M16 12.5C11.7 10.4 6.4 10 5.2 12.5S10 16.5 16 12.5Z" fill="#0DB39E" opacity=".45"/></svg>
+                WindSense AI
+              </div>
+            </th>
+            <th class="th-oem">OEM Monitoring</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-label">Works with any turbine manufacturer</td>
+            <td class="td-ws"><span class="badge-ws">✓ OEM-Agnostic</span></td>
+            <td><span class="badge-oem">Own turbines only</span></td>
+          </tr>
+          <tr>
+            <td class="td-label">Mixed-fleet unified view</td>
+            <td class="td-ws"><span class="badge-ws">✓ All OEMs in one dashboard</span></td>
+            <td><span class="badge-oem">No — separate portals per OEM</span></td>
+          </tr>
+          <tr>
+            <td class="td-label">Risk-ranked maintenance prioritisation</td>
+            <td class="td-ws"><span class="badge-ws">✓ FMECA-driven RPN queue</span></td>
+            <td><span class="badge-oem">Alerts only — no ranking</span></td>
+          </tr>
+          <tr>
+            <td class="td-label">Remaining Useful Life estimation</td>
+            <td class="td-ws"><span class="badge-ws">✓ Per component</span></td>
+            <td><span class="badge-oem">Limited or not available</span></td>
+          </tr>
+          <tr>
+            <td class="td-label">Explainable AI (SHAP) for each alert</td>
+            <td class="td-ws"><span class="badge-ws">✓ Sensor-level attribution</span></td>
+            <td><span class="badge-oem">Black-box — no explanation</span></td>
+          </tr>
+          <tr>
+            <td class="td-label">Sealed Asset Health Certificates (decision-support)</td>
+            <td class="td-ws"><span class="badge-ws">✓ Structured PDF reports</span></td>
+            <td><span class="badge-oem">Not provided</span></td>
+          </tr>
+          <tr>
+            <td class="td-label">Independent from OEM commercial interests</td>
+            <td class="td-ws"><span class="badge-ws">✓ Fully independent</span></td>
+            <td><span class="badge-oem">Conflict of interest risk</span></td>
+          </tr>
+          <tr>
+            <td class="td-label">Pricing for mid-tier operators</td>
+            <td class="td-ws"><span class="badge-ws">✓ From €49/turbine/month</span></td>
+            <td><span class="badge-oem">€80–120/turbine/month+</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ CREDIBILITY ════════════════════════════════════════════════════ -->
+<section id="cred">
+  <div class="wrap">
+    <div class="cred-inner">
+      <div class="cred-text rev">
+        <span class="section-eyebrow">Research Foundation & Credibility</span>
+        <h2 class="section-title">Built by reliability engineers.<br/>Not data scientists with a dashboard.</h2>
+        <p>WindSense AI is not a generic ML pipeline wrapped in a wind energy interface. It is a reliability engineering methodology — RCM, FMECA, ISO 13381 condition monitoring — encoded as software by engineers who have worked in O&M environments across Ireland, UK, Germany, Denmark, and Spain.</p>
+        <p>The Failure Mode Library at the core of our risk engine encodes what an experienced reliability engineer knows intuitively after years of practice — and it is the asset no pure data science team can replicate without our background.</p>
+        <div class="cred-pillars">
+          <div class="cred-pillar">
+            <div class="cred-pillar-dot"></div>
+            <div>
+              <strong>TU Dublin Research Foundation</strong>
+              <span>Academic rigour applied to real O&M decision problems, with direct industry collaboration.</span>
+            </div>
+          </div>
+          <div class="cred-pillar">
+            <div class="cred-pillar-dot"></div>
+            <div>
+              <strong>CMRP · RCM · FMECA Expertise</strong>
+              <span>Certified Maintenance &amp; Reliability Professional methodology at the core of the risk engine — not bolt-on compliance theatre.</span>
+            </div>
+          </div>
+          <div class="cred-pillar">
+            <div class="cred-pillar-dot"></div>
+            <div>
+              <strong>Built for real O&M workflows</strong>
+              <span>Designed with input from asset managers, reliability engineers, and O&M teams — not abstracted from the maintenance floor.</span>
+            </div>
+          </div>
+        </div>
+        <div class="geo-strip">
+          <strong>Operator input from:</strong> Ireland · United Kingdom · Germany · Denmark · Spain · Netherlands — the exact geographic footprint of the post-warranty transition.
+        </div>
+      </div>
+      <div class="cred-logos rev" style="transition-delay:.15s">
+        <div class="cred-logo-card">
+          <div class="cred-logo-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect x="4" y="4" width="24" height="24" rx="4" fill="#1A3A5C"/>
+              <text x="16" y="22" text-anchor="middle" font-family="'Inter',sans-serif" font-size="12" font-weight="800" fill="#0DB39E">TU</text>
+            </svg>
+          </div>
+          <strong>TU Dublin</strong>
+          <span>Research Institution</span>
+        </div>
+        <div class="cred-logo-card">
+          <div class="cred-logo-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="12" fill="#1A3A5C"/>
+              <path d="M10 16l4 4 8-8" stroke="#0DB39E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <strong>Innovate4Sustainability</strong>
+          <span>Programme Finalist</span>
+        </div>
+        <div class="cred-logo-card">
+          <div class="cred-logo-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <path d="M16 4L5 9v9c0 6 5 11 11 13 6-2 11-7 11-13V9L16 4Z" fill="#1A3A5C"/>
+              <text x="16" y="21" text-anchor="middle" font-family="'Inter',sans-serif" font-size="9" font-weight="700" fill="#0DB39E">CMRP</text>
+            </svg>
+          </div>
+          <strong>CMRP Certified</strong>
+          <span>Reliability Engineering</span>
+        </div>
+        <div class="cred-logo-card">
+          <div class="cred-logo-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect x="4" y="8" width="24" height="16" rx="3" fill="#1A3A5C"/>
+              <text x="16" y="19" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8" font-weight="600" fill="#0DB39E">ISO 13381</text>
+            </svg>
+          </div>
+          <strong>ISO 13381-Aligned</strong>
+          <span>Condition Monitoring Standard</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ PRICING ════════════════════════════════════════════════════════ -->
+<section id="pricing">
+  <div class="wrap">
+    <div class="pricing-header rev">
+      <div class="eyebrow">Simple, Transparent Pricing</div>
+      <h2 class="section-title-light">40–60% below OEM contracts.<br/>With capabilities they never offered.</h2>
+      <p class="section-intro-light" style="margin:0 auto">Per-turbine SaaS subscription. No per-OEM fees. No turbine model lock-in. One subscription covers your entire mixed fleet.</p>
+    </div>
+    <div class="pricing-grid rev" style="transition-delay:.1s">
+
+      <!-- Standard -->
+      <div class="price-card">
+        <div class="price-tier">Standard Monitoring</div>
+        <div class="price-num">€49<span style="font-size:18px;font-weight:400;color:rgba(255,255,255,.4)">/mo</span></div>
+        <div class="price-per">per turbine · billed annually</div>
+        <div class="price-desc">Core fault detection and fleet visibility for operators who need independent OEM-agnostic monitoring without the OEM price tag.</div>
+        <ul class="price-ul">
+          <li><span class="ck">✓</span> All OEM adapters included</li>
+          <li><span class="ck">✓</span> Fault prediction engine (ML)</li>
+          <li><span class="ck">✓</span> Unified fleet dashboard</li>
+          <li><span class="ck">✓</span> FMECA risk-ranked alert queue</li>
+          <li><span class="ck">✓</span> Email &amp; SMS alerting</li>
+          <li><span class="ck">✓</span> SCADA trend explorer</li>
+          <li><span class="ck">✓</span> Basic Asset Health report</li>
+        </ul>
+        <a href="#final-cta" class="btn btn-outline" style="width:100%;justify-content:center">Request Pricing</a>
+      </div>
+
+      <!-- Advanced (featured) -->
+      <div class="price-card featured">
+        <div class="price-pop">Most Popular</div>
+        <div class="price-tier">Advanced Intelligence</div>
+        <div class="price-num">€149<span style="font-size:18px;font-weight:400;color:var(--g400)">/mo</span></div>
+        <div class="price-per">per turbine · billed annually</div>
+        <div class="price-desc">Full reliability intelligence suite — SHAP explainability, RUL estimation, Asset Health Certificates, and CMMS integration for O&M teams who need decision-grade outputs.</div>
+        <ul class="price-ul">
+          <li><span class="ck">✓</span> Everything in Standard</li>
+          <li><span class="ck">✓</span> SHAP explainability panel</li>
+          <li><span class="ck">✓</span> Remaining Useful Life (RUL)</li>
+          <li><span class="ck">✓</span> Failure mode classification</li>
+          <li><span class="ck">✓</span> Asset Health Certificates (PDF)</li>
+          <li><span class="ck">✓</span> Work order recommendations</li>
+          <li><span class="ck">✓</span> CMMS export</li>
+          <li><span class="ck">✓</span> Priority support</li>
+        </ul>
+        <a href="#final-cta" class="btn btn-primary" style="width:100%;justify-content:center">Request Pricing</a>
+        <div class="price-note">Break-even: preventing &lt;1 major failure/year covers the full annual subscription for a 50-turbine fleet.</div>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="price-card">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-num" style="font-size:28px;padding-top:6px">Custom</div>
+        <div class="price-per">volume · custom SLA</div>
+        <div class="price-desc">For portfolio operators, asset managers, and technical-review partners requiring white-label deployment, custom integrations, or multi-site volume pricing.</div>
+        <ul class="price-ul">
+          <li><span class="ck">✓</span> Everything in Advanced</li>
+          <li><span class="ck">✓</span> White-label option</li>
+          <li><span class="ck">✓</span> Custom OEM adapter development</li>
+          <li><span class="ck">✓</span> Portfolio-level benchmarking</li>
+          <li><span class="ck">✓</span> Technical-review reporting suite</li>
+          <li><span class="ck">✓</span> API access</li>
+          <li><span class="ck">✓</span> Dedicated reliability engineer</li>
+          <li><span class="ck">✓</span> Custom SLA + uptime guarantee</li>
+        </ul>
+        <a href="#final-cta" class="btn btn-outline" style="width:100%;justify-content:center">Talk to Sales</a>
+      </div>
+
+    </div>
+
+    <!-- Professional Services -->
+    <div class="ps-note rev" style="transition-delay:.2s">
+      <strong>Optional Professional Services</strong> — available with any subscription tier
+      <div class="ps-services">
+        <div class="ps-card">
+          <strong>RCM / FMECA Workshops</strong>
+          <span>Facilitated reliability-centred maintenance methodology sessions tailored to your turbine fleet and failure mode library.</span>
+        </div>
+        <div class="ps-card">
+          <strong>Data Onboarding &amp; Integration</strong>
+          <span>Hands-on SCADA tag mapping, historian connection, and baseline health assessment — typically completed within 30 days.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ FINAL CTA ══════════════════════════════════════════════════════ -->
+<section id="final-cta">
+  <div class="wrap">
+    <div class="rev">
+      <span class="section-eyebrow" style="display:block;text-align:center;margin-bottom:12px">Get Started</span>
+      <h2>Bring Reliability Intelligence<br/>to Your Wind Fleet</h2>
+      <p>Start with a 90-day pilot on 10–20 turbines. We deploy alongside your existing monitoring, validate every alert, and deliver your first Asset Health Certificates. No OEM involvement required.</p>
+      <div class="cta-row">
+        <a href="login.html" class="btn btn-primary" style="padding:15px 32px;font-size:16px">
+          <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M2 6l6 4 6-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Book a Demo
+        </a>
+        <a href="login.html" class="btn btn-dark" style="padding:15px 32px;font-size:16px">
+          Contact Sales
+        </a>
+      </div>
+      <div class="contact-detail">
+        Questions? Email us at <a href="mailto:info@windsense.ai">info@windsense.ai</a>
+        &nbsp;·&nbsp; No OEM involvement required &nbsp;·&nbsp; Works with existing SCADA infrastructure
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ FOOTER ═════════════════════════════════════════════════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a href="#hero" class="logo" style="margin-bottom:0">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="3.5" fill="#0DB39E"/>
+            <path d="M16 12.5C14 8 10 4 12 2s5 4 4 10.5Z" fill="#0DB39E" opacity=".9"/>
+            <path d="M16 12.5C20.3 10.4 25.6 10 26.8 12.5S22 16.5 16 12.5Z" fill="#0DB39E" opacity=".65"/>
+            <path d="M16 12.5C11.7 10.4 6.4 10 5.2 12.5S10 16.5 16 12.5Z" fill="#0DB39E" opacity=".45"/>
+            <circle cx="16" cy="16" r="2" fill="#0F172A"/>
+          </svg>
+          Wind<span>Sense</span>&nbsp;AI
+        </a>
+        <p class="footer-brand-text">The independent, OEM-agnostic Reliability Intelligence Platform for mid-tier wind operators.</p>
+        <div class="footer-badge">ISO 13381-aligned · FMECA-driven · SHAP-explainable</div>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#value">Platform</a></li>
+          <li><a href="#compare">Why WindSense</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#">API Docs</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Research</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="#">Technical Whitepaper</a></li>
+          <li><a href="#">FMECA Methodology</a></li>
+          <li><a href="#">ROI Calculator</a></li>
+          <li><a href="#">Security &amp; Privacy</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 WindSense AI · ivenTUre Innovate4Sustainability · TU Dublin</span>
+      <span>Privacy Policy · Terms of Service</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Scroll reveal */
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)} });
+},{threshold:.1});
+document.querySelectorAll('.rev').forEach(el => obs.observe(el));
+
+/* Nav active highlight */
+const secs = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  secs.forEach(s => { if(window.scrollY >= s.offsetTop - 90) cur = s.id });
+  links.forEach(a => {
+    a.style.color = a.getAttribute('href') === '#'+cur
+      ? 'var(--teal-b)' : 'rgba(255,255,255,.65)';
+  });
+},{passive:true});
+</script>
+</body>
+</html>

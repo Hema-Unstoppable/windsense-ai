@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dashboard — WindSense AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <style>
+    :root{
+      --navy:#09192A; --navy-mid:#0F2337; --steel:#1A3A5C;
+      --teal:#0A8C7C; --teal-b:#0DB39E; --teal-dim:rgba(13,179,158,.1);
+      --green:#16A34A; --green-l:#22C55E; --green-dim:rgba(22,163,74,.1);
+      --amber:#D97706; --amber-dim:rgba(217,119,6,.1);
+      --red:#DC2626; --red-dim:rgba(220,38,38,.1);
+      --g50:#F8FAFC; --g100:#F1F5F9; --g200:#E2E8F0;
+      --g300:#CBD5E1; --g400:#94A3B8; --g500:#64748B;
+      --g700:#334155; --g900:#0F172A; --white:#FFFFFF;
+      --f-main:'Inter',sans-serif; --f-mono:'JetBrains Mono',monospace;
+      --sidebar:240px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:var(--f-main);color:var(--g700);background:var(--g50);
+         display:flex;-webkit-font-smoothing:antialiased}
+
+    /* ── SIDEBAR ──────────────────────────────────────────────────── */
+    .sidebar{
+      width:var(--sidebar);flex-shrink:0;
+      background:var(--navy);
+      display:flex;flex-direction:column;
+      height:100vh;overflow-y:auto;
+      border-right:1px solid rgba(255,255,255,.06);
+    }
+    .sb-logo{
+      display:flex;align-items:center;gap:9px;
+      padding:20px 20px 16px;
+      font-size:16px;font-weight:700;color:var(--white);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      text-decoration:none;
+    }
+    .sb-logo span{color:var(--teal-b)}
+    .sb-section-label{
+      font-family:var(--f-mono);font-size:9px;font-weight:600;
+      text-transform:uppercase;letter-spacing:.12em;
+      color:rgba(255,255,255,.25);padding:20px 20px 6px;
+    }
+    .sb-nav{list-style:none;padding:0 10px}
+    .sb-nav li{margin-bottom:2px}
+    .sb-nav a,.sb-nav button{
+      display:flex;align-items:center;gap:10px;
+      width:100%;padding:9px 12px;border-radius:6px;
+      font-size:13px;font-weight:500;color:rgba(255,255,255,.55);
+      text-decoration:none;background:none;border:none;cursor:pointer;
+      transition:.15s;text-align:left;
+    }
+    .sb-nav a:hover,.sb-nav button:hover{
+      background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)
+    }
+    .sb-nav a.active{
+      background:rgba(13,179,158,.12);color:var(--teal-b);
+      font-weight:600;
+    }
+    .sb-nav a.active svg{opacity:1}
+    .sb-nav svg{opacity:.5;flex-shrink:0}
+    .sb-nav a.active svg{opacity:1}
+    .sb-badge{
+      margin-left:auto;background:var(--red);color:var(--white);
+      font-size:10px;font-weight:700;
+      padding:2px 6px;border-radius:10px;font-family:var(--f-mono);
+    }
+    .sb-user{
+      margin-top:auto;padding:14px 16px;
+      border-top:1px solid rgba(255,255,255,.06);
+      display:flex;align-items:center;gap:10px;
+    }
+    .sb-avatar{
+      width:32px;height:32px;border-radius:50%;
+      background:var(--teal);display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:700;color:var(--white);flex-shrink:0;
+    }
+    .sb-user-info{flex:1;min-width:0}
+    .sb-user-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sb-user-role{font-size:10px;color:rgba(255,255,255,.35);font-family:var(--f-mono)}
+    .sb-signout{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3);
+      padding:4px;border-radius:4px;transition:.15s}
+    .sb-signout:hover{color:rgba(255,255,255,.7)}
+
+    /* ── MAIN ─────────────────────────────────────────────────────── */
+    .main{flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+
+    /* Top bar */
+    .topbar{
+      background:var(--white);border-bottom:1px solid var(--g200);
+      padding:0 28px;height:60px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:10;
+    }
+    .topbar-left{display:flex;align-items:center;gap:16px}
+    .page-title{font-size:16px;font-weight:700;color:var(--navy)}
+    .breadcrumb{font-size:12px;color:var(--g400);font-family:var(--f-mono)}
+    .topbar-right{display:flex;align-items:center;gap:12px}
+    .live-pill{
+      display:flex;align-items:center;gap:6px;
+      font-family:var(--f-mono);font-size:11px;color:var(--green);
+      background:var(--green-dim);border:1px solid rgba(22,163,74,.2);
+      padding:4px 10px;border-radius:20px;
+    }
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green-l);
+      animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .topbar-btn{
+      display:flex;align-items:center;gap:6px;padding:7px 14px;
+      border-radius:6px;font-size:13px;font-weight:600;border:none;cursor:pointer;
+      transition:.15s;
+    }
+    .topbar-btn.primary{background:var(--teal);color:var(--white)}
+    .topbar-btn.primary:hover{background:var(--teal-b)}
+    .topbar-btn.ghost{background:var(--g100);color:var(--g700);border:1px solid var(--g200)}
+    .topbar-btn.ghost:hover{background:var(--g200)}
+
+    /* Screen router */
+    .screen{display:none}
+    .screen.active{display:block}
+
+    /* ── CONTENT AREA ─────────────────────────────────────────────── */
+    .content{padding:24px 28px}
+
+    /* KPI strip */
+    .kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
+    .kpi-card{
+      background:var(--white);border:1px solid var(--g200);
+      border-radius:10px;padding:18px 20px;
+    }
+    .kpi-card .kpi-label{font-size:11px;color:var(--g400);font-weight:500;margin-bottom:6px}
+    .kpi-card .kpi-val{font-family:var(--f-mono);font-size:26px;font-weight:700;color:var(--navy)}
+    .kpi-card .kpi-change{font-size:11px;margin-top:4px;font-family:var(--f-mono);font-weight:500}
+    .kpi-card .kpi-change.up{color:var(--green)}
+    .kpi-card .kpi-change.warn{color:var(--amber)}
+    .kpi-card .kpi-change.dn{color:var(--red)}
+    .kpi-border-green{border-top:3px solid var(--green)}
+    .kpi-border-amber{border-top:3px solid var(--amber)}
+    .kpi-border-red{border-top:3px solid var(--red)}
+    .kpi-border-teal{border-top:3px solid var(--teal)}
+
+    /* Grid layout helpers */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px}
+    .grid-65{display:grid;grid-template-columns:1.7fr 1fr;gap:20px;margin-bottom:20px}
+    .grid-56{display:grid;grid-template-columns:1fr 1.4fr;gap:20px;margin-bottom:20px}
+
+    /* Cards */
+    .card{
+      background:var(--white);border:1px solid var(--g200);
+      border-radius:10px;overflow:hidden;
+    }
+    .card-head{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 18px;border-bottom:1px solid var(--g100);
+    }
+    .card-title{font-size:13px;font-weight:700;color:var(--navy)}
+    .card-sub{font-size:11px;color:var(--g400);font-family:var(--f-mono)}
+    .card-body{padding:16px 18px}
+    .card-action{
+      font-size:12px;color:var(--teal);font-weight:600;
+      background:none;border:none;cursor:pointer;transition:.15s;
+    }
+    .card-action:hover{color:var(--teal-b)}
+
+    /* Risk badges */
+    .rbadge{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:28px;height:28px;border-radius:5px;
+      font-family:var(--f-mono);font-size:10px;font-weight:700;flex-shrink:0;
+    }
+    .rbadge.C{background:rgba(220,38,38,.15);color:var(--red)}
+    .rbadge.H{background:rgba(220,38,38,.12);color:#EF4444}
+    .rbadge.M{background:rgba(217,119,6,.12);color:var(--amber)}
+    .rbadge.L{background:rgba(22,163,74,.1);color:var(--green)}
+
+    /* Health score circle */
+    .health-ring-wrap{position:relative;width:80px;height:80px}
+    .health-ring-wrap svg{transform:rotate(-90deg)}
+    .health-ring-label{
+      position:absolute;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+    }
+    .health-ring-label .hval{
+      font-family:var(--f-mono);font-size:18px;font-weight:700;color:var(--navy)
+    }
+    .health-ring-label .hlbl{font-size:9px;color:var(--g400)}
+
+    /* Turbine heatmap grid */
+    .heat-grid{
+      display:grid;grid-template-columns:repeat(10,1fr);gap:5px;padding:16px 18px;
+    }
+    .hcell{
+      aspect-ratio:1;border-radius:4px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--f-mono);font-size:8px;font-weight:600;
+      transition:.15s;border:1px solid transparent;
+    }
+    .hcell:hover{transform:scale(1.12);z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+    .hcell.ok{background:rgba(22,163,74,.15);color:var(--green);border-color:rgba(22,163,74,.2)}
+    .hcell.warn{background:rgba(217,119,6,.15);color:var(--amber);border-color:rgba(217,119,6,.2)}
+    .hcell.crit{background:rgba(220,38,38,.15);color:var(--red);border-color:rgba(220,38,38,.2);
+      animation:blink 2s ease-in-out infinite}
+    .hcell.offline{background:var(--g100);color:var(--g300);border-color:var(--g200)}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.6}}
+
+    /* Legend */
+    .heat-legend{
+      display:flex;gap:16px;padding:0 18px 14px;
+      font-size:11px;color:var(--g500);
+    }
+    .leg-dot{
+      width:8px;height:8px;border-radius:2px;flex-shrink:0;
+      align-self:center;
+    }
+
+    /* Alert list */
+    .alert-list{display:flex;flex-direction:column;gap:0}
+    .alert-row{
+      display:flex;align-items:center;gap:12px;
+      padding:12px 18px;border-bottom:1px solid var(--g100);
+      transition:.15s;cursor:pointer;
+    }
+    .alert-row:last-child{border-bottom:none}
+    .alert-row:hover{background:var(--g50)}
+    .alert-info{flex:1;min-width:0}
+    .alert-title{font-size:13px;font-weight:600;color:var(--navy);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .alert-sub{font-size:11px;color:var(--g400);font-family:var(--f-mono);margin-top:2px}
+    .alert-rpn{text-align:right;flex-shrink:0}
+    .rpn-val{font-family:var(--f-mono);font-size:15px;font-weight:700;color:var(--navy);display:block}
+    .rpn-lbl{font-size:10px;color:var(--g400)}
+
+    /* SHAP bars */
+    .shap-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .shap-lbl{font-size:12px;color:var(--g500);width:180px;flex-shrink:0}
+    .shap-track{flex:1;height:8px;background:var(--g100);border-radius:4px;overflow:hidden}
+    .shap-fill{height:100%;border-radius:4px;
+      background:linear-gradient(90deg,var(--teal),var(--teal-b))}
+    .shap-pct{font-family:var(--f-mono);font-size:11px;font-weight:600;
+      color:var(--teal);width:34px;text-align:right;flex-shrink:0}
+
+    /* Prediction card */
+    .pred-card{
+      border:1px solid var(--g200);border-radius:8px;margin-bottom:10px;
+      overflow:hidden;cursor:pointer;transition:.15s;
+    }
+    .pred-card:hover{border-color:rgba(13,179,158,.3);box-shadow:0 2px 12px rgba(13,179,158,.08)}
+    .pred-card.selected{border-color:var(--teal);box-shadow:0 0 0 2px rgba(13,179,158,.15)}
+    .pred-head{
+      display:flex;align-items:center;gap:10px;padding:12px 14px;
+    }
+    .pred-body{
+      padding:12px 14px;border-top:1px solid var(--g100);
+      background:var(--g50);display:none;
+    }
+    .pred-card.selected .pred-body{display:block}
+    .pred-name{font-size:13px;font-weight:700;color:var(--navy);flex:1}
+    .pred-conf{
+      font-family:var(--f-mono);font-size:11px;font-weight:600;
+      color:var(--teal);background:var(--teal-dim);
+      padding:2px 7px;border-radius:4px;
+    }
+    .pred-rul{font-family:var(--f-mono);font-size:11px;color:var(--g500);margin-top:2px}
+
+    /* Component health bars */
+    .comp-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .comp-name{font-size:12px;color:var(--g500);width:110px;flex-shrink:0}
+    .comp-track{flex:1;height:6px;background:var(--g200);border-radius:3px;overflow:hidden}
+    .comp-fill{height:100%;border-radius:3px}
+    .comp-score{font-family:var(--f-mono);font-size:12px;font-weight:600;
+      width:30px;text-align:right;flex-shrink:0}
+
+    /* Table */
+    .ws-table{width:100%;border-collapse:collapse}
+    .ws-table th{
+      padding:10px 14px;text-align:left;font-size:11px;font-weight:600;
+      text-transform:uppercase;letter-spacing:.06em;color:var(--g400);
+      background:var(--g50);border-bottom:1px solid var(--g200);
+    }
+    .ws-table td{
+      padding:12px 14px;font-size:13px;border-bottom:1px solid var(--g100);
+    }
+    .ws-table tr:last-child td{border-bottom:none}
+    .ws-table tr:hover td{background:var(--g50)}
+
+    /* Status dots */
+    .sdot{
+      display:inline-flex;align-items:center;gap:5px;
+      font-size:12px;font-weight:500;
+    }
+    .sdot::before{
+      content:'';width:7px;height:7px;border-radius:50%;
+    }
+    .sdot.ok::before{background:var(--green-l)}
+    .sdot.ok{color:var(--green)}
+    .sdot.warn::before{background:var(--amber)}
+    .sdot.warn{color:var(--amber)}
+    .sdot.crit::before{background:var(--red);animation:pulse 1.5s ease-in-out infinite}
+    .sdot.crit{color:var(--red)}
+
+    /* Cert card */
+    .cert-card{
+      border:1px solid var(--g200);border-radius:8px;
+      padding:16px;margin-bottom:12px;transition:.15s;
+    }
+    .cert-card:hover{border-color:rgba(13,179,158,.3);box-shadow:0 2px 10px rgba(13,179,158,.07)}
+    .cert-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .cert-score{
+      width:44px;height:44px;border-radius:50%;
+      border:2.5px solid var(--green);
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--f-mono);font-size:14px;font-weight:700;
+      color:var(--green);flex-shrink:0;
+    }
+    .cert-score.amber{border-color:var(--amber);color:var(--amber)}
+    .cert-score.red{border-color:var(--red);color:var(--red)}
+    .cert-info strong{font-size:13px;color:var(--navy);display:block}
+    .cert-info span{font-size:11px;color:var(--g400);font-family:var(--f-mono)}
+    .cert-btn{
+      padding:6px 14px;border-radius:5px;font-size:12px;font-weight:600;
+      background:var(--teal);color:var(--white);border:none;cursor:pointer;
+      transition:.15s;margin-top:8px;display:inline-flex;align-items:center;gap:5px;
+    }
+    .cert-btn:hover{background:var(--teal-b)}
+
+    /* Scada chart container */
+    .chart-wrap{position:relative;height:180px;padding:8px 0}
+
+    /* Setting rows */
+    .setting-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 18px;border-bottom:1px solid var(--g100);
+    }
+    .setting-row:last-child{border-bottom:none}
+    .setting-info strong{font-size:14px;color:var(--navy);display:block}
+    .setting-info span{font-size:12px;color:var(--g400);margin-top:2px;display:block}
+    .toggle-wrap{display:flex;align-items:center;gap:10px}
+    .toggle{
+      position:relative;width:42px;height:22px;
+      background:var(--g200);border-radius:11px;cursor:pointer;
+      transition:.25s;flex-shrink:0;border:none;
+    }
+    .toggle.on{background:var(--teal)}
+    .toggle::after{
+      content:'';position:absolute;top:3px;left:3px;
+      width:16px;height:16px;border-radius:50%;
+      background:var(--white);transition:.25s;
+      box-shadow:0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle.on::after{left:23px}
+    .setting-btn{
+      padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;
+      background:var(--g100);color:var(--g700);border:1px solid var(--g200);cursor:pointer;transition:.15s;
+    }
+    .setting-btn:hover{background:var(--g200)}
+
+    /* Upload zone */
+    .upload-zone{
+      border:2px dashed var(--g200);border-radius:10px;
+      padding:40px;text-align:center;cursor:pointer;
+      transition:.2s;margin:16px 18px;
+    }
+    .upload-zone:hover{border-color:var(--teal);background:var(--teal-dim)}
+    .upload-zone p{font-size:14px;color:var(--g500);margin-top:10px}
+    .upload-zone span{font-size:12px;color:var(--g400)}
+
+    /* Empty/loading states */
+    .loading-overlay{
+      position:fixed;inset:0;background:var(--navy);
+      display:flex;align-items:center;justify-content:center;
+      z-index:999;transition:opacity .4s;
+    }
+    .loading-overlay.hidden{opacity:0;pointer-events:none}
+    .loading-spinner{
+      width:48px;height:48px;border:3px solid rgba(255,255,255,.1);
+      border-top-color:var(--teal-b);border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Tooltip */
+    .tip{position:relative}
+    .tip:hover::after{
+      content:attr(data-tip);
+      position:absolute;bottom:calc(100% + 6px);left:50%;
+      transform:translateX(-50%);
+      background:var(--g900);color:var(--white);
+      font-size:11px;white-space:nowrap;padding:5px 9px;border-radius:5px;
+      pointer-events:none;z-index:50;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--g200);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--g300)}
+
+    /* Chart.js tooltip override */
+    .chartjs-tooltip{pointer-events:none}
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div style="text-align:center">
+    <div class="loading-spinner"></div>
+    <div style="margin-top:16px;font-family:var(--f-mono);font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.06em">LOADING WIND FLEET DATA…</div>
+  </div>
+</div>
+
+<!-- ── SIDEBAR ──────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <a href="index.html" class="sb-logo">
+    <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="3.5" fill="#0DB39E"/>
+      <path d="M16 12.5C14 8 10 4 12 2s5 4 4 10.5Z" fill="#0DB39E" opacity=".9"/>
+      <path d="M16 12.5C20.3 10.4 25.6 10 26.8 12.5S22 16.5 16 12.5Z" fill="#0DB39E" opacity=".65"/>
+      <path d="M16 12.5C11.7 10.4 6.4 10 5.2 12.5S10 16.5 16 12.5Z" fill="#0DB39E" opacity=".45"/>
+      <circle cx="16" cy="16" r="2" fill="#09192A"/>
+    </svg>
+    Wind<span>Sense</span>&nbsp;AI
+  </a>
+
+  <div class="sb-section-label">Monitoring</div>
+  <ul class="sb-nav">
+    <li><a href="#" class="active" onclick="showScreen('fleet',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+      Fleet Command
+      <span class="sb-badge" id="badge-alerts">3</span>
+    </a></li>
+    <li><a href="#" onclick="showScreen('predictions',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M2 11l3-4 3 3 3-5 4 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="3" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+      ML Predictions
+    </a></li>
+    <li><a href="#" onclick="showScreen('riskqueue',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Risk Queue
+    </a></li>
+    <li><a href="#" onclick="showScreen('scada',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 9l2-3 2 2 2-4 3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      SCADA Trends
+    </a></li>
+  </ul>
+
+  <div class="sb-section-label">Reliability</div>
+  <ul class="sb-nav">
+    <li><a href="#" onclick="showScreen('certs',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M8 1L2 4v6c0 3 2.7 5.5 6 6 3.3-.5 6-3 6-6V4L8 1Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Asset Health Certs
+    </a></li>
+    <li><a href="#" onclick="showScreen('workorders',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 3V2a1 1 0 012 0v1M9 3V2a1 1 0 012 0v1M4 8h8M4 11h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Work Orders
+    </a></li>
+    <li><a href="validation.html">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M8 1.5l5.5 2.5v4c0 3.5-2.4 5.8-5.5 6.5C4.9 13.8 2.5 11.5 2.5 8V4L8 1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 8.2l1.4 1.4L10.5 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      ML Validation
+    </a></li>
+  </ul>
+
+  <div class="sb-section-label">Operations</div>
+  <ul class="sb-nav">
+    <li><a href="onboarding.html">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="13" cy="12" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+      Onboarding &amp; DQ
+    </a></li>
+  </ul>
+
+  <div class="sb-section-label">Account</div>
+  <ul class="sb-nav">
+    <li><a href="#" onclick="showScreen('settings',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Settings
+    </a></li>
+    <li><button onclick="handleSignOut()">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Sign Out
+    </button></li>
+  </ul>
+
+  <div class="sb-user">
+    <div class="sb-avatar" id="user-avatar">WS</div>
+    <div class="sb-user-info">
+      <div class="sb-user-name" id="user-name">Wind Operator</div>
+      <div class="sb-user-role" id="user-role">RELIABILITY ENGINEER</div>
+    </div>
+    <button class="sb-signout tip" data-tip="Sign out" onclick="handleSignOut()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><path d="M10 11l3-3-3-3M13 8H6M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</aside>
+
+<!-- ── MAIN ─────────────────────────────────────────────────────────── -->
+<main class="main">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="page-title" id="page-title">Fleet Command Centre</div>
+        <div class="breadcrumb" id="page-breadcrumb">WindSense AI · Site Alpha · 60 turbines</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><div class="live-dot"></div>Live · Updated 2 min ago</div>
+      <button class="topbar-btn ghost" onclick="showScreen('certs',document.querySelector('.sb-nav a[onclick*=certs]'))">
+        <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><path d="M8 1L2 4v6c0 3 2.7 5.5 6 6 3.3-.5 6-3 6-6V4L8 1Z" stroke="currentColor" stroke-width="1.3"/></svg>
+        Generate Certificate
+      </button>
+      <button class="topbar-btn primary" onclick="showScreen('predictions',document.querySelector('.sb-nav a[onclick*=predictions]'))">
+        <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="12" cy="4" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M2 11l3-4 3 3 3-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Run ML Analysis
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 1 — FLEET COMMAND
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen active content" id="screen-fleet">
+    <!-- KPIs -->
+    <div class="kpi-strip">
+      <div class="kpi-card kpi-border-green">
+        <div class="kpi-label">Fleet Health Score</div>
+        <div class="kpi-val">82%</div>
+        <div class="kpi-change warn">▾ 3 pts vs last week</div>
+      </div>
+      <div class="kpi-card kpi-border-red">
+        <div class="kpi-label">Critical Alerts</div>
+        <div class="kpi-val">3</div>
+        <div class="kpi-change dn">Requires action today</div>
+      </div>
+      <div class="kpi-card kpi-border-amber">
+        <div class="kpi-label">Total Active Alerts</div>
+        <div class="kpi-val">14</div>
+        <div class="kpi-change warn">▲ 2 new since yesterday</div>
+      </div>
+      <div class="kpi-card kpi-border-teal">
+        <div class="kpi-label">Turbines Monitored</div>
+        <div class="kpi-val">60</div>
+        <div class="kpi-change up">58 operating · 2 offline</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Risk Exposure (€)</div>
+        <div class="kpi-val">€94K</div>
+        <div class="kpi-change warn">This quarter</div>
+      </div>
+    </div>
+
+    <div class="grid-65">
+      <!-- Turbine heatmap -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Fleet Health Heatmap</div>
+            <div class="card-sub">Click any turbine for detail</div>
+          </div>
+          <button class="card-action">Full screen ↗</button>
+        </div>
+        <div class="heat-grid" id="heatmap"></div>
+        <div class="heat-legend">
+          <div style="display:flex;align-items:center;gap:5px"><div class="leg-dot" style="background:rgba(22,163,74,.5)"></div>Healthy</div>
+          <div style="display:flex;align-items:center;gap:5px"><div class="leg-dot" style="background:rgba(217,119,6,.5)"></div>Warning</div>
+          <div style="display:flex;align-items:center;gap:5px"><div class="leg-dot" style="background:rgba(220,38,38,.5)"></div>Critical</div>
+          <div style="display:flex;align-items:center;gap:5px"><div class="leg-dot" style="background:var(--g300)"></div>Offline</div>
+        </div>
+      </div>
+
+      <!-- Top risk alerts -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Top Risk Alerts</div>
+            <div class="card-sub">Ranked by RPN · FMECA-weighted</div>
+          </div>
+          <button class="card-action" onclick="showScreen('riskqueue',null)">View all →</button>
+        </div>
+        <div class="alert-list">
+          <div class="alert-row" onclick="showScreen('predictions',null)">
+            <div class="rbadge C">C</div>
+            <div class="alert-info">
+              <div class="alert-title">Gearbox Bearing Degradation · T-14</div>
+              <div class="alert-sub">Vestas V90 · Oil temp +8°C · Vib RMS ↑ · RUL: 18d</div>
+            </div>
+            <div class="alert-rpn"><span class="rpn-val">87</span><span class="rpn-lbl">RPN</span></div>
+          </div>
+          <div class="alert-row" onclick="showScreen('predictions',null)">
+            <div class="rbadge H">H</div>
+            <div class="alert-info">
+              <div class="alert-title">Generator Winding Thermal Drift · T-07</div>
+              <div class="alert-sub">GE 2.5XL · Nacelle ΔT 14°C · Winding ↑</div>
+            </div>
+            <div class="alert-rpn"><span class="rpn-val">74</span><span class="rpn-lbl">RPN</span></div>
+          </div>
+          <div class="alert-row" onclick="showScreen('predictions',null)">
+            <div class="rbadge H">H</div>
+            <div class="alert-info">
+              <div class="alert-title">Main Bearing Spalling Risk · T-31</div>
+              <div class="alert-sub">Enercon E-82 · AE sensor ↑ · RUL: 38d</div>
+            </div>
+            <div class="alert-rpn"><span class="rpn-val">61</span><span class="rpn-lbl">RPN</span></div>
+          </div>
+          <div class="alert-row">
+            <div class="rbadge M">M</div>
+            <div class="alert-info">
+              <div class="alert-title">Pitch Actuator Response Lag · T-22</div>
+              <div class="alert-sub">Vestas V112 · Pitch response >120ms threshold</div>
+            </div>
+            <div class="alert-rpn"><span class="rpn-val">44</span><span class="rpn-lbl">RPN</span></div>
+          </div>
+          <div class="alert-row">
+            <div class="rbadge M">M</div>
+            <div class="alert-info">
+              <div class="alert-title">Yaw System Misalignment · T-45</div>
+              <div class="alert-sub">GE 2.5XL · Yaw error avg 8° vs 3° baseline</div>
+            </div>
+            <div class="alert-rpn"><span class="rpn-val">38</span><span class="rpn-lbl">RPN</span></div>
+          </div>
+          <div class="alert-row">
+            <div class="rbadge L">L</div>
+            <div class="alert-info">
+              <div class="alert-title">Transformer Oil Temp Elevation · T-03</div>
+              <div class="alert-sub">Enercon E-82 · Oil temp +4°C above 12-month avg</div>
+            </div>
+            <div class="alert-rpn"><span class="rpn-val">22</span><span class="rpn-lbl">RPN</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 2 — ML PREDICTIONS & SHAP
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen content" id="screen-predictions">
+    <div class="kpi-strip">
+      <div class="kpi-card kpi-border-teal">
+        <div class="kpi-label">Model Accuracy</div>
+        <div class="kpi-val">93.4%</div>
+        <div class="kpi-change up">XGBoost · last 90d</div>
+      </div>
+      <div class="kpi-card kpi-border-red">
+        <div class="kpi-label">Active Predictions</div>
+        <div class="kpi-val">14</div>
+        <div class="kpi-change warn">3 high confidence</div>
+      </div>
+      <div class="kpi-card kpi-border-amber">
+        <div class="kpi-label">Avg. Warning Lead</div>
+        <div class="kpi-val">26d</div>
+        <div class="kpi-change up">Days before failure</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">False Positive Rate</div>
+        <div class="kpi-val">4.2%</div>
+        <div class="kpi-change up">▾ Improving</div>
+      </div>
+      <div class="kpi-card kpi-border-green">
+        <div class="kpi-label">Model Version</div>
+        <div class="kpi-val" style="font-size:18px">v2.4.1</div>
+        <div class="kpi-change up">Retrained 14 May 2026</div>
+      </div>
+    </div>
+
+    <div class="grid-56">
+      <!-- Prediction list -->
+      <div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-head">
+            <div>
+              <div class="card-title">ML Fault Predictions</div>
+              <div class="card-sub">Click prediction to see SHAP breakdown</div>
+            </div>
+            <button class="card-action">Export CSV</button>
+          </div>
+          <div style="padding:12px 18px;max-height:calc(100vh - 280px);overflow-y:auto">
+
+            <div class="pred-card selected" onclick="selectPred(this,'T-14 · Gearbox Bearing Degradation','Vestas V90','91%','18–32 days','Gearbox failure probability elevated. Primary driver: oil temperature trending +8°C above seasonal baseline over 21 days, compounded by vibration RMS increase at 15Hz frequency band. Immediate inspection recommended before next weather window (3 days).')">
+              <div class="pred-head">
+                <div class="rbadge C">C</div>
+                <div>
+                  <div class="pred-name">T-14 · Gearbox Bearing Degradation</div>
+                  <div class="pred-rul">Vestas V90 · RUL: 18–32 days</div>
+                </div>
+                <span class="pred-conf">91% conf.</span>
+              </div>
+              <div class="pred-body">
+                <div class="shap-row">
+                  <div class="shap-lbl">Oil temperature trend (+8°C)</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:84%"></div></div>
+                  <div class="shap-pct">42%</div>
+                </div>
+                <div class="shap-row">
+                  <div class="shap-lbl">Vibration RMS 15Hz band ↑</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:70%"></div></div>
+                  <div class="shap-pct">35%</div>
+                </div>
+                <div class="shap-row">
+                  <div class="shap-lbl">Nacelle temp asymmetry</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:46%"></div></div>
+                  <div class="shap-pct">23%</div>
+                </div>
+                <div style="margin-top:10px;font-size:11px;color:var(--g400);font-family:var(--f-mono)">
+                  Confidence: 91% · Model: XGBoost v2.4.1 · Last scored: 2 min ago
+                </div>
+              </div>
+            </div>
+
+            <div class="pred-card" onclick="selectPred(this,'T-07 · Generator Winding Thermal Drift','GE 2.5XL','86%','28–40 days','Generator winding insulation degradation detected. Primary signal: winding temperature differential (ΔT) of 14°C between phases — normal range < 5°C. Secondary driver: nacelle temperature elevated asymmetrically suggesting possible cooling airflow obstruction.')">
+              <div class="pred-head">
+                <div class="rbadge H">H</div>
+                <div>
+                  <div class="pred-name">T-07 · Generator Winding Thermal Drift</div>
+                  <div class="pred-rul">GE 2.5XL · RUL: 28–40 days</div>
+                </div>
+                <span class="pred-conf">86% conf.</span>
+              </div>
+              <div class="pred-body">
+                <div class="shap-row">
+                  <div class="shap-lbl">Winding ΔT (14°C inter-phase)</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:90%"></div></div>
+                  <div class="shap-pct">51%</div>
+                </div>
+                <div class="shap-row">
+                  <div class="shap-lbl">Nacelle temp asymmetry</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:62%"></div></div>
+                  <div class="shap-pct">31%</div>
+                </div>
+                <div class="shap-row">
+                  <div class="shap-lbl">Power output deviation</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:36%"></div></div>
+                  <div class="shap-pct">18%</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pred-card" onclick="selectPred(this,'T-31 · Main Bearing Spalling Risk','Enercon E-82','79%','35–45 days','Main bearing spalling pattern detected via acoustic emission sensor. AE RMS increasing at 12% per week — consistent with early-stage spalling failure progression. Plan bearing inspection and lubrication assessment within 21 days.')">
+              <div class="pred-head">
+                <div class="rbadge H">H</div>
+                <div>
+                  <div class="pred-name">T-31 · Main Bearing Spalling Risk</div>
+                  <div class="pred-rul">Enercon E-82 · RUL: 35–45 days</div>
+                </div>
+                <span class="pred-conf">79% conf.</span>
+              </div>
+              <div class="pred-body">
+                <div class="shap-row">
+                  <div class="shap-lbl">AE RMS trend ↑ 12%/wk</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:76%"></div></div>
+                  <div class="shap-pct">48%</div>
+                </div>
+                <div class="shap-row">
+                  <div class="shap-lbl">Shaft speed irregularity</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:52%"></div></div>
+                  <div class="shap-pct">32%</div>
+                </div>
+                <div class="shap-row">
+                  <div class="shap-lbl">Lube oil pressure variance</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:32%"></div></div>
+                  <div class="shap-pct">20%</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pred-card" onclick="selectPred(this,'T-22 · Pitch Actuator Response Lag','Vestas V112','68%','45–60 days','Pitch system actuator response degradation detected. Response time averaging 127ms vs 85ms design baseline — 49% slower than nominal. Consistent with hydraulic seal wear or actuator friction increase.')">
+              <div class="pred-head">
+                <div class="rbadge M">M</div>
+                <div>
+                  <div class="pred-name">T-22 · Pitch Actuator Response Lag</div>
+                  <div class="pred-rul">Vestas V112 · RUL: 45–60 days</div>
+                </div>
+                <span class="pred-conf">68% conf.</span>
+              </div>
+              <div class="pred-body">
+                <div class="shap-row">
+                  <div class="shap-lbl">Pitch response time >120ms</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:72%"></div></div>
+                  <div class="shap-pct">55%</div>
+                </div>
+                <div class="shap-row">
+                  <div class="shap-lbl">Hydraulic pressure variance</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:44%"></div></div>
+                  <div class="shap-pct">28%</div>
+                </div>
+                <div class="shap-row">
+                  <div class="shap-lbl">Blade pitch angle offset</div>
+                  <div class="shap-track"><div class="shap-fill" style="width:22%"></div></div>
+                  <div class="shap-pct">17%</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- SHAP detail + RUL panel -->
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-head">
+            <div>
+              <div class="card-title" id="shap-title">SHAP Explainability · T-14</div>
+              <div class="card-sub" id="shap-sub">Gearbox Bearing Degradation · 91% confidence</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="padding:12px;background:rgba(13,179,158,.06);border:1px solid rgba(13,179,158,.15);border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--g700);line-height:1.7" id="shap-narrative">
+              Gearbox failure probability elevated. Primary driver: oil temperature trending +8°C above seasonal baseline over 21 days, compounded by vibration RMS increase at 15Hz frequency band. Immediate inspection recommended before next weather window (3 days).
+            </div>
+            <div class="shap-row">
+              <div class="shap-lbl">Oil temperature trend (+8°C)</div>
+              <div class="shap-track"><div class="shap-fill" style="width:84%"></div></div>
+              <div class="shap-pct">42%</div>
+            </div>
+            <div class="shap-row">
+              <div class="shap-lbl">Vibration RMS 15Hz band ↑</div>
+              <div class="shap-track"><div class="shap-fill" style="width:70%"></div></div>
+              <div class="shap-pct">35%</div>
+            </div>
+            <div class="shap-row">
+              <div class="shap-lbl">Nacelle temp asymmetry</div>
+              <div class="shap-track"><div class="shap-fill" style="width:46%"></div></div>
+              <div class="shap-pct">23%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title" id="comp-title">Component Health · T-14 · Vestas V90</div>
+            <div class="card-sub">RUL estimates per component</div>
+          </div>
+          <div class="card-body">
+            <div class="comp-row">
+              <div class="comp-name">Gearbox</div>
+              <div class="comp-track"><div class="comp-fill" style="width:52%;background:var(--amber)"></div></div>
+              <div class="comp-score" style="color:var(--amber)">52</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-name">Main Bearing</div>
+              <div class="comp-track"><div class="comp-fill" style="width:79%;background:var(--green)"></div></div>
+              <div class="comp-score" style="color:var(--green)">79</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-name">Generator</div>
+              <div class="comp-track"><div class="comp-fill" style="width:88%;background:var(--green)"></div></div>
+              <div class="comp-score" style="color:var(--green)">88</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-name">Pitch System</div>
+              <div class="comp-track"><div class="comp-fill" style="width:94%;background:var(--green)"></div></div>
+              <div class="comp-score" style="color:var(--green)">94</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-name">Yaw System</div>
+              <div class="comp-track"><div class="comp-fill" style="width:82%;background:var(--green)"></div></div>
+              <div class="comp-score" style="color:var(--green)">82</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-name">Transformer</div>
+              <div class="comp-track"><div class="comp-fill" style="width:91%;background:var(--green)"></div></div>
+              <div class="comp-score" style="color:var(--green)">91</div>
+            </div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--g100)">
+              <div style="font-size:11px;color:var(--g400);font-family:var(--f-mono);margin-bottom:6px">Overall Health Score</div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="font-family:var(--f-mono);font-size:28px;font-weight:700;color:var(--amber)">81</div>
+                <div style="font-size:12px;color:var(--g500)">SERVICEABLE — schedule<br/>gearbox inspection within 14 days</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 3 — RISK QUEUE
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen content" id="screen-riskqueue">
+    <div class="kpi-strip">
+      <div class="kpi-card kpi-border-red"><div class="kpi-label">Critical (RPN > 70)</div><div class="kpi-val">3</div><div class="kpi-change dn">Action required today</div></div>
+      <div class="kpi-card kpi-border-amber"><div class="kpi-label">High (RPN 40–70)</div><div class="kpi-val">5</div><div class="kpi-change warn">Schedule this week</div></div>
+      <div class="kpi-card kpi-border-teal"><div class="kpi-label">Medium (RPN 20–40)</div><div class="kpi-val">4</div><div class="kpi-change up">Plan next sprint</div></div>
+      <div class="kpi-card"><div class="kpi-label">Low (RPN < 20)</div><div class="kpi-val">2</div><div class="kpi-change up">Monitor only</div></div>
+      <div class="kpi-card kpi-border-green"><div class="kpi-label">Est. Cost if Unplanned</div><div class="kpi-val">€1.2M</div><div class="kpi-change dn">Fleet exposure</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div><div class="card-title">Risk-Ranked Work Queue</div><div class="card-sub">Ranked by Expected Economic Loss (€) · hover € for the parts/labour/crane/lost-revenue breakdown · RUL shown separately as urgency</div></div>
+        <button class="card-action">Export to CMMS</button>
+      </div>
+      <table class="ws-table">
+        <thead>
+          <tr><th>Rank</th><th>Expected Loss €</th><th>Action Pri.</th><th>Turbine</th><th>Failure Mode</th><th>P(fail)</th><th>RUL</th><th>ISO 14224</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong style="color:var(--red);font-family:var(--f-mono)">87</strong></td><td style="font-family:var(--f-mono);color:var(--g400)">#1</td><td><strong>T-14</strong></td><td style="font-family:var(--f-mono);font-size:11px">Vestas V90</td><td>Gearbox Bearing Degradation</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--red)">91%</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--red)">18d</td><td><span class="sdot crit">Critical</span></td><td><button class="cert-btn" style="padding:5px 10px;font-size:11px">Create WO</button></td></tr>
+          <tr><td><strong style="color:var(--red);font-family:var(--f-mono)">74</strong></td><td style="font-family:var(--f-mono);color:var(--g400)">#2</td><td><strong>T-07</strong></td><td style="font-family:var(--f-mono);font-size:11px">GE 2.5XL</td><td>Generator Winding Thermal Drift</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--red)">86%</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--amber)">28d</td><td><span class="sdot crit">Critical</span></td><td><button class="cert-btn" style="padding:5px 10px;font-size:11px">Create WO</button></td></tr>
+          <tr><td><strong style="color:var(--red);font-family:var(--f-mono)">61</strong></td><td style="font-family:var(--f-mono);color:var(--g400)">#3</td><td><strong>T-31</strong></td><td style="font-family:var(--f-mono);font-size:11px">Enercon E-82</td><td>Main Bearing Spalling</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--amber)">79%</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--amber)">38d</td><td><span class="sdot crit">Critical</span></td><td><button class="cert-btn" style="padding:5px 10px;font-size:11px">Create WO</button></td></tr>
+          <tr><td><strong style="color:var(--amber);font-family:var(--f-mono)">44</strong></td><td style="font-family:var(--f-mono);color:var(--g400)">#4</td><td><strong>T-22</strong></td><td style="font-family:var(--f-mono);font-size:11px">Vestas V112</td><td>Pitch Actuator Response Lag</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--amber)">68%</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--green)">52d</td><td><span class="sdot warn">High</span></td><td><button class="cert-btn" style="padding:5px 10px;font-size:11px;background:var(--amber)">Create WO</button></td></tr>
+          <tr><td><strong style="color:var(--amber);font-family:var(--f-mono)">38</strong></td><td style="font-family:var(--f-mono);color:var(--g400)">#5</td><td><strong>T-45</strong></td><td style="font-family:var(--f-mono);font-size:11px">GE 2.5XL</td><td>Yaw System Misalignment</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--amber)">61%</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--green)">60d</td><td><span class="sdot warn">High</span></td><td><button class="cert-btn" style="padding:5px 10px;font-size:11px;background:var(--amber)">Create WO</button></td></tr>
+          <tr><td><strong style="color:var(--amber);font-family:var(--f-mono)">31</strong></td><td style="font-family:var(--f-mono);color:var(--g400)">#6</td><td><strong>T-08</strong></td><td style="font-family:var(--f-mono);font-size:11px">Nordex N117</td><td>Blade Leading Edge Erosion</td><td style="font-family:var(--f-mono);font-size:12px">55%</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--green)">75d</td><td><span class="sdot warn">High</span></td><td><button class="cert-btn" style="padding:5px 10px;font-size:11px;background:var(--amber)">Create WO</button></td></tr>
+          <tr><td><strong style="color:var(--g400);font-family:var(--f-mono)">22</strong></td><td style="font-family:var(--f-mono);color:var(--g400)">#7</td><td><strong>T-03</strong></td><td style="font-family:var(--f-mono);font-size:11px">Enercon E-82</td><td>Transformer Oil Temp Elevation</td><td style="font-family:var(--f-mono);font-size:12px">48%</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--green)">90d+</td><td><span class="sdot ok">Monitor</span></td><td><button class="cert-btn" style="padding:5px 10px;font-size:11px;background:var(--g400)">Monitor</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 4 — SCADA TRENDS
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen content" id="screen-scada">
+    <div class="kpi-strip">
+      <div class="kpi-card kpi-border-teal"><div class="kpi-label">Data Points / Day</div><div class="kpi-val">8,640</div><div class="kpi-change up">10-min resolution</div></div>
+      <div class="kpi-card"><div class="kpi-label">Tags Monitored</div><div class="kpi-val">340</div><div class="kpi-change up">Per turbine · All OEMs</div></div>
+      <div class="kpi-card kpi-border-amber"><div class="kpi-label">Anomalies Flagged</div><div class="kpi-val">7</div><div class="kpi-change warn">Last 7 days</div></div>
+      <div class="kpi-card kpi-border-green"><div class="kpi-label">Data Completeness</div><div class="kpi-val">98.7%</div><div class="kpi-change up">Above 95% threshold</div></div>
+      <div class="kpi-card"><div class="kpi-label">Historian</div><div class="kpi-val" style="font-size:15px">OSIsoft PI</div><div class="kpi-change up">Connected · Live</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Gearbox Oil Temperature · T-14</div><div class="card-sub">30-day trend · 10-min resolution · Anomaly flagged</div></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="chart-oil-temp"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Vibration RMS (15Hz) · T-14</div><div class="card-sub">30-day trend · Gearbox bearing sensor</div></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="chart-vibration"></canvas></div></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Power Output vs Wind Speed · T-07</div><div class="card-sub">14-day scatter · Generator efficiency check</div></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="chart-power"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Fleet Availability Trend</div><div class="card-sub">12-month rolling · All 60 turbines</div></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="chart-availability"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 5 — ASSET HEALTH CERTS
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen content" id="screen-certs">
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Asset Health Certificates</div><div class="card-sub">Engineering decision-support · SHA-256 sealed · PDF export · 90-day validity</div></div>
+          <div style="padding:16px 18px">
+            <div class="cert-card">
+              <div class="cert-header"><div class="cert-score amber">81</div><div class="cert-info"><strong>T-14 · Vestas V90 · Site Alpha</strong><span>SERVICEABLE — with scheduled maintenance · Issued: 31 May 2026</span></div></div>
+              <div class="comp-row"><div class="comp-name">Gearbox</div><div class="comp-track"><div class="comp-fill" style="width:52%;background:var(--amber)"></div></div><div class="comp-score" style="color:var(--amber)">52</div></div>
+              <div class="comp-row"><div class="comp-name">Generator</div><div class="comp-track"><div class="comp-fill" style="width:88%;background:var(--green)"></div></div><div class="comp-score" style="color:var(--green)">88</div></div>
+              <div class="comp-row"><div class="comp-name">Main Bearing</div><div class="comp-track"><div class="comp-fill" style="width:79%;background:var(--green)"></div></div><div class="comp-score" style="color:var(--green)">79</div></div>
+              <button class="cert-btn"><svg width="12" height="12" fill="none" viewBox="0 0 12 12"><path d="M6 1v7M3 5l3 3 3-3M2 10h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Download PDF</button>
+            </div>
+            <div class="cert-card">
+              <div class="cert-header"><div class="cert-score">94</div><div class="cert-info"><strong>T-01 · Vestas V90 · Site Alpha</strong><span>HEALTHY — no action required · Issued: 31 May 2026</span></div></div>
+              <div class="comp-row"><div class="comp-name">Gearbox</div><div class="comp-track"><div class="comp-fill" style="width:94%;background:var(--green)"></div></div><div class="comp-score" style="color:var(--green)">94</div></div>
+              <div class="comp-row"><div class="comp-name">Generator</div><div class="comp-track"><div class="comp-fill" style="width:97%;background:var(--green)"></div></div><div class="comp-score" style="color:var(--green)">97</div></div>
+              <div class="comp-row"><div class="comp-name">Main Bearing</div><div class="comp-track"><div class="comp-fill" style="width:92%;background:var(--green)"></div></div><div class="comp-score" style="color:var(--green)">92</div></div>
+              <button class="cert-btn"><svg width="12" height="12" fill="none" viewBox="0 0 12 12"><path d="M6 1v7M3 5l3 3 3-3M2 10h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Download PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Generate New Certificate</div><div class="card-sub">Select turbine and run full assessment</div></div>
+        <div class="upload-zone" onclick="alert('Certificate generation requires connected SCADA data.')">
+          <svg width="40" height="40" fill="none" viewBox="0 0 40 40"><path d="M20 8L7 14v14c0 7 6 13 13 14 7-1 13-7 13-14V14L20 8Z" stroke="#0DB39E" stroke-width="1.5" stroke-linejoin="round" opacity=".6"/><path d="M14 20l5 5 9-9" stroke="#0DB39E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p>Generate Asset Health Certificate</p>
+          <span>Select a turbine from the fleet to run a full ML assessment and generate a SHA-256-sealed engineering decision-support PDF certificate.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 6 — WORK ORDERS
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen content" id="screen-workorders">
+    <div class="card">
+      <div class="card-head"><div class="card-title">Recommended Work Orders</div><div class="card-sub">Decision support · auto-generated from ML predictions · Exportable to CMMS</div></div>
+      <table class="ws-table">
+        <thead><tr><th>WO#</th><th>Turbine</th><th>Task</th><th>Priority</th><th>Est. Duration</th><th>Est. Cost (Planned)</th><th>Deadline</th><th>Export</th></tr></thead>
+        <tbody>
+          <tr><td style="font-family:var(--f-mono);font-size:11px">WO-2024</td><td><strong>T-14</strong></td><td>Gearbox bearing inspection + oil sample</td><td><span class="sdot crit">Critical</span></td><td>4h crew × 2</td><td style="font-family:var(--f-mono)">€3,200</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--red)">3 Jun 2026</td><td><button class="cert-btn" style="font-size:11px;padding:4px 10px">Export to CMMS</button></td></tr>
+          <tr><td style="font-family:var(--f-mono);font-size:11px">WO-2025</td><td><strong>T-07</strong></td><td>Generator winding inspection + cooling check</td><td><span class="sdot crit">Critical</span></td><td>6h crew × 2</td><td style="font-family:var(--f-mono)">€4,800</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--red)">5 Jun 2026</td><td><button class="cert-btn" style="font-size:11px;padding:4px 10px">Export to CMMS</button></td></tr>
+          <tr><td style="font-family:var(--f-mono);font-size:11px">WO-2026</td><td><strong>T-31</strong></td><td>Main bearing AE inspection + lubrication</td><td><span class="sdot warn">High</span></td><td>3h crew × 2</td><td style="font-family:var(--f-mono)">€2,100</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--amber)">12 Jun 2026</td><td><button class="cert-btn" style="font-size:11px;padding:4px 10px">Export to CMMS</button></td></tr>
+          <tr><td style="font-family:var(--f-mono);font-size:11px">WO-2027</td><td><strong>T-22</strong></td><td>Pitch actuator hydraulic service</td><td><span class="sdot warn">High</span></td><td>5h crew × 2</td><td style="font-family:var(--f-mono)">€3,600</td><td style="font-family:var(--f-mono);font-size:12px;color:var(--amber)">18 Jun 2026</td><td><button class="cert-btn" style="font-size:11px;padding:4px 10px">Export to CMMS</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN 7 — SETTINGS
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen content" id="screen-settings">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Data Connection</div><div class="card-sub">SCADA historian settings</div></div>
+        <div class="setting-row"><div class="setting-info"><strong>OSIsoft PI Connection</strong><span>pi-server.yourcompany.com · Port 5459 · TLS encrypted</span></div><span class="sdot ok">Connected</span></div>
+        <div class="setting-row"><div class="setting-info"><strong>Data Pull Interval</strong><span>Every 10 minutes · 144 pulls/day</span></div><button class="setting-btn">Change</button></div>
+        <div class="setting-row"><div class="setting-info"><strong>Tag Mapping Profile</strong><span>Site Alpha · 340 mapped tags · Last updated 14 May</span></div><button class="setting-btn">Edit</button></div>
+        <div class="setting-row"><div class="setting-info"><strong>SCADA Data Upload (CSV)</strong><span>Manual upload for offline data ingestion</span></div><button class="setting-btn">Upload</button></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Alert & Notification Settings</div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Critical Alert Emails</strong><span>Sent immediately for RPN > 70</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="setting-row"><div class="setting-info"><strong>Daily Digest Email</strong><span>Fleet summary sent at 07:00 each morning</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="setting-row"><div class="setting-info"><strong>SMS Alerts (Critical only)</strong><span>+353 · · · configured</span></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="setting-row"><div class="setting-info"><strong>Weekly PDF Report</strong><span>Auto-generated every Monday at 06:00</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">ML Model Settings</div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Active Model</strong><span>XGBoost v2.4.1 · Trained 14 May 2026</span></div><button class="setting-btn">Retrain</button></div>
+        <div class="setting-row"><div class="setting-info"><strong>Confidence Threshold</strong><span>Alert generated at ≥ 60% confidence</span></div><button class="setting-btn">Adjust</button></div>
+        <div class="setting-row"><div class="setting-info"><strong>Auto Retraining</strong><span>Model retrained monthly on new SCADA data</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Account & Security</div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Email Address</strong><span id="settings-email">user@company.com</span></div><button class="setting-btn">Change</button></div>
+        <div class="setting-row"><div class="setting-info"><strong>Password</strong><span>Last changed: never</span></div><button class="setting-btn">Reset</button></div>
+        <div class="setting-row"><div class="setting-info"><strong>Two-Factor Authentication</strong><span>Recommended for asset operator accounts</span></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="setting-row"><div class="setting-info"><strong>Data Encryption</strong><span>AES-256 · All SCADA data encrypted at rest</span></div><span class="sdot ok">Active</span></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ── Supabase init & auth guard ─────────────────────────────────── */
+const { createClient } = supabase;
+let sb = null;
+let currentUser = null;
+
+async function initApp() {
+  // Demo mode if keys not configured
+  if (SUPABASE_URL === "YOUR_SUPABASE_URL_HERE") {
+    setUserDisplay({ email: 'demo@windsense.ai', user_metadata: { first_name: 'Demo', last_name: 'User', company: 'Wind Operator Ltd' } });
+    showApp();
+    return;
+  }
+  try {
+    sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    currentUser = session.user;
+    setUserDisplay(currentUser);
+    // Listen for auth changes
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) window.location.href = 'login.html';
+    });
+  } catch(e) {
+    console.error('Auth error:', e);
+    window.location.href = 'login.html';
+  }
+  showApp();
+}
+
+function setUserDisplay(user) {
+  const meta = user.user_metadata || {};
+  const name = meta.first_name ? `${meta.first_name} ${meta.last_name || ''}`.trim() : user.email?.split('@')[0] || 'Operator';
+  const initials = name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-avatar').textContent = initials;
+  if (meta.company) document.getElementById('user-role').textContent = meta.company.toUpperCase().slice(0,22);
+  const emailEl = document.getElementById('settings-email');
+  if (emailEl) emailEl.textContent = user.email || 'demo@windsense.ai';
+}
+
+async function handleSignOut() {
+  if (sb) await sb.auth.signOut();
+  window.location.href = 'login.html';
+}
+
+function showApp() {
+  const overlay = document.getElementById('loading-overlay');
+  overlay.classList.add('hidden');
+  setTimeout(() => overlay.style.display = 'none', 400);
+  buildHeatmap();
+  initCharts();
+}
+
+/* ── Screen routing ─────────────────────────────────────────────── */
+const titles = {
+  fleet:      { title:'Fleet Command Centre',       sub:'WindSense AI · Monitoring · All 60 turbines' },
+  predictions:{ title:'ML Predictions & SHAP',      sub:'WindSense AI · XGBoost v2.4.1 · 14 active predictions' },
+  riskqueue:  { title:'Risk Queue',                 sub:'WindSense AI · FMECA Risk Priority Number ranking' },
+  scada:      { title:'SCADA Trend Explorer',       sub:'WindSense AI · 10-min resolution · OSIsoft PI' },
+  certs:      { title:'Asset Health Certificates',  sub:'WindSense AI · Engineering decision-support · SHA-256 sealed' },
+  workorders: { title:'Work Orders',                sub:'WindSense AI · Auto-generated · CMMS export' },
+  settings:   { title:'Settings',                   sub:'WindSense AI · Account & Configuration' },
+};
+
+function showScreen(id, linkEl) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sb-nav a').forEach(a => a.classList.remove('active'));
+  const screen = document.getElementById('screen-'+id);
+  if (screen) screen.classList.add('active');
+  if (linkEl) linkEl.classList.add('active');
+  const t = titles[id] || titles.fleet;
+  document.getElementById('page-title').textContent = t.title;
+  document.getElementById('page-breadcrumb').textContent = t.sub;
+  // Lazy init charts when SCADA screen shown
+  if (id === 'scada') setTimeout(renderCharts, 50);
+}
+
+/* ── Turbine heatmap ────────────────────────────────────────────── */
+function buildHeatmap() {
+  const grid = document.getElementById('heatmap');
+  if (!grid) return;
+  const states = [
+    'ok','ok','ok','warn','ok','ok','ok','crit','ok','ok',
+    'ok','warn','ok','ok','ok','ok','ok','ok','crit','ok',
+    'ok','warn','ok','ok','ok','ok','ok','ok','ok','ok',
+    'crit','ok','ok','ok','ok','warn','ok','ok','ok','ok',
+    'ok','ok','ok','ok','warn','ok','ok','ok','ok','ok',
+    'ok','ok','ok','ok','ok','ok','offline','ok','ok','ok',
+  ];
+  const labels = ['T-14','T-07','T-31','T-22','T-45','T-03'];
+  let critCount = 0;
+  states.forEach((s,i) => {
+    const cell = document.createElement('div');
+    cell.className = 'hcell ' + s;
+    cell.textContent = 'T'+(i+1 < 10 ? '0'+(i+1) : (i+1));
+    cell.title = `Turbine ${i+1} — ${s.toUpperCase()}`;
+    if (s === 'crit') critCount++;
+    cell.onclick = () => {
+      document.getElementById('badge-alerts').textContent = critCount;
+      showScreen('predictions', null);
+    };
+    grid.appendChild(cell);
+  });
+}
+
+/* ── Prediction selection (SHAP panel update) ───────────────────── */
+function selectPred(card, title, model, conf, rul, narrative) {
+  document.querySelectorAll('.pred-card').forEach(c => {
+    c.classList.remove('selected');
+    c.querySelector('.pred-body').style.display = 'none';
+  });
+  card.classList.add('selected');
+  card.querySelector('.pred-body').style.display = 'block';
+  const tid = title.split('·')[0].trim();
+  const mode = title.split('·')[1]?.trim() || '';
+  document.getElementById('shap-title').textContent = `SHAP Explainability · ${tid}`;
+  document.getElementById('shap-sub').textContent = `${mode} · ${conf} confidence`;
+  document.getElementById('shap-narrative').textContent = narrative;
+  document.getElementById('comp-title').textContent = `Component Health · ${tid} · ${model}`;
+}
+
+/* ── Charts ─────────────────────────────────────────────────────── */
+let chartsInit = false;
+function initCharts() { /* charts rendered lazily */ }
+
+function renderCharts() {
+  if (chartsInit) return;
+  chartsInit = true;
+
+  // Generate 30 days of 10-min data (sample every 2h for perf)
+  const labels30d = [];
+  const now = new Date();
+  for (let i = 30; i >= 0; i--) {
+    const d = new Date(now - i * 86400000);
+    labels30d.push(d.toLocaleDateString('en-IE',{month:'short',day:'numeric'}));
+  }
+
+  const baseTemp = 52;
+  const oilTemps = labels30d.map((_,i) => +(baseTemp + i * 0.28 + (Math.random()-0.4)*1.2).toFixed(1));
+  const baseline = labels30d.map(() => baseTemp);
+
+  const baseVib = 0.12;
+  const vibs = labels30d.map((_,i) => +(baseVib + i*0.006 + (Math.random()-0.4)*0.015).toFixed(3));
+
+  const powers = labels30d.map(() => +(Math.random()*1.8 + 0.2).toFixed(2));
+  const winds  = labels30d.map(() => +(Math.random()*8 + 4).toFixed(1));
+
+  const avail = [95.2,94.8,96.1,95.7,94.2,93.8,95.4,96.2,95.1,94.9,95.8,94.5];
+  const availLabels = ['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May'];
+
+  const defOpts = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+    scales:{
+      x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:10},maxTicksLimit:8,color:'#94A3B8'}},
+      y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:10},color:'#94A3B8'}}
+    },
+    elements:{point:{radius:0,hoverRadius:4}}
+  };
+
+  // Chart 1 — Oil temp
+  new Chart(document.getElementById('chart-oil-temp'), {
+    type:'line',
+    data:{
+      labels:labels30d,
+      datasets:[
+        {label:'Oil Temp (°C)',data:oilTemps,borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,.08)',fill:true,tension:.4,borderWidth:2},
+        {label:'Baseline',data:baseline,borderColor:'rgba(148,163,184,.5)',borderDash:[4,4],borderWidth:1,fill:false}
+      ]
+    },
+    options:{...defOpts, scales:{...defOpts.scales, y:{...defOpts.scales.y, title:{display:true,text:'°C',font:{size:11}}}}}
+  });
+
+  // Chart 2 — Vibration
+  new Chart(document.getElementById('chart-vibration'), {
+    type:'line',
+    data:{
+      labels:labels30d,
+      datasets:[{label:'Vib RMS (mm/s)',data:vibs,borderColor:'#D97706',backgroundColor:'rgba(217,119,6,.08)',fill:true,tension:.4,borderWidth:2}]
+    },
+    options:{...defOpts, scales:{...defOpts.scales, y:{...defOpts.scales.y, title:{display:true,text:'mm/s',font:{size:11}}}}}
+  });
+
+  // Chart 3 — Power vs Wind
+  new Chart(document.getElementById('chart-power'), {
+    type:'scatter',
+    data:{
+      datasets:[{
+        label:'Power Output',
+        data:powers.map((p,i) => ({x:winds[i],y:p})),
+        backgroundColor:'rgba(13,179,158,.5)',pointRadius:5,
+      }]
+    },
+    options:{
+      ...defOpts,
+      plugins:{...defOpts.plugins,tooltip:{callbacks:{label:d=>`Wind: ${d.parsed.x} m/s · Power: ${d.parsed.y} MW`}}},
+      scales:{
+        x:{...defOpts.scales.x,title:{display:true,text:'Wind Speed (m/s)',font:{size:11}}},
+        y:{...defOpts.scales.y,title:{display:true,text:'Power (MW)',font:{size:11}}}
+      }
+    }
+  });
+
+  // Chart 4 — Fleet availability
+  new Chart(document.getElementById('chart-availability'), {
+    type:'bar',
+    data:{
+      labels:availLabels,
+      datasets:[{
+        label:'Fleet Availability (%)',
+        data:avail,
+        backgroundColor:avail.map(v => v >= 95 ? 'rgba(22,163,74,.6)' : 'rgba(217,119,6,.6)'),
+        borderRadius:4,
+      }]
+    },
+    options:{
+      ...defOpts,
+      scales:{
+        x:{...defOpts.scales.x},
+        y:{...defOpts.scales.y,min:90,title:{display:true,text:'%',font:{size:11}}}
+      }
+    }
+  });
+}
+
+/* ── Boot ───────────────────────────────────────────────────────── */
+/* expose sb so the live layer can reuse the Supabase session for auth */
+window.sb = sb;
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+
+<!-- ══ LIVE DATA LAYER ══════════════════════════════════════════════
+     Connects this dashboard to the FastAPI backend (real ML output).
+     If the API is offline, the demo data above is shown instead.
+     Override the API location with:  window.WS_API_ROOT = "http://host:port"
+═════════════════════════════════════════════════════════════════════ -->
+<script src="windsense-live.js"></script>
+</body>
+</html>

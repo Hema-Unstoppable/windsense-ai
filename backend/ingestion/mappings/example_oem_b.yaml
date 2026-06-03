@@ -1,0 +1,21 @@
+# ════════════════════════════════════════════════════════════════════
+#  EXAMPLE — onboarding a DIFFERENT OEM with different tag names + units.
+#  Demonstrates that a new site needs only a mapping file: the source tags
+#  are vendor-specific and temperatures are in Fahrenheit / power in Watts;
+#  the canonical layer converts them automatically (degF->degC, W->kW).
+# ════════════════════════════════════════════════════════════════════
+site: "Example Farm B (illustrative)"
+country: "Germany"
+timezone: "Europe/Berlin"
+sample_rate_seconds: 600
+timestamp_column: "Timestamp"
+asset_id_column: "TurbineName"
+
+mappings:
+  - { source: "WindSpd_mps", canonical: "Wind_speed_m/s_avg", unit: "m/s" }
+  - { source: "ActivePower_W", canonical: "Grid_power_kW_avg", unit: "W" }      # W -> kW
+  - { source: "RotorRPM", canonical: "Rot_rpm_rpm_avg", unit: "rpm" }
+  - { source: "GbxOilTemp_F", canonical: "Temp_oil_gearbox_C_avg", unit: "degF" }  # degF -> degC
+  - { source: "GenBrgDE_F", canonical: "Temp_gen_bearing_Drive_End_C_avg", unit: "degF" }
+  - { source: "NacelleTemp_F", canonical: "Nac_temperature_C_avg", unit: "degF" }
+  - { source: "GridFreq", canonical: "Grid_freq_Hz_avg", unit: "Hz" }

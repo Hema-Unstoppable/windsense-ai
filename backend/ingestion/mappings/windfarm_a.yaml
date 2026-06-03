@@ -1,0 +1,36 @@
+# ════════════════════════════════════════════════════════════════════
+#  WindSense AI — Site Onboarding Mapping  (Wind Farm A / CARE dataset)
+#
+#  Onboarding a new site = ONE file like this. No per-site Python.
+#  Each entry maps a source SCADA tag -> a canonical field, with its unit
+#  (auto-converted if it differs from the canonical unit).
+# ════════════════════════════════════════════════════════════════════
+site: "Wind Farm A"
+country: "Ireland"
+timezone: "UTC"
+sample_rate_seconds: 600          # 10-minute averages
+timestamp_column: "time_stamp"
+asset_id_column: "asset_id"
+
+mappings:
+  # ── operational ──
+  - { source: "wind_speed_3_avg", canonical: "Wind_speed_m/s_avg", unit: "m/s" }
+  - { source: "wind_speed_4_avg", canonical: "Est_windspeed_m/s_avg", unit: "m/s" }
+  - { source: "power_30_avg",     canonical: "Grid_power_kW_avg", unit: "kW" }
+  - { source: "sensor_52_avg",    canonical: "Rot_rpm_rpm_avg", unit: "rpm" }
+  - { source: "sensor_18_avg",    canonical: "gen_latest_period_rpm_avg", unit: "rpm" }
+  - { source: "sensor_5_avg",     canonical: "Pit_angle_avg", unit: "deg" }
+  - { source: "sensor_42_avg",    canonical: "Nac_direction", unit: "deg" }
+  # ── thermal ──
+  - { source: "sensor_12_avg",    canonical: "Temp_oil_gearbox_C_avg", unit: "degC" }
+  - { source: "sensor_11_avg",    canonical: "Temp_bearing_on_high_speed_shaft_C_avg", unit: "degC" }
+  - { source: "sensor_13_avg",    canonical: "Temp_gen_bearing_Drive_End_C_avg", unit: "degC" }
+  - { source: "sensor_14_avg",    canonical: "Temp_gen_bearing_Non_Drive_End_C_avg", unit: "degC" }
+  - { source: "sensor_43_avg",    canonical: "Nac_temperature_C_avg", unit: "degC" }
+  - { source: "sensor_0_avg",     canonical: "Amb_temp_C_avg", unit: "degC" }
+  - { source: "sensor_41_avg",    canonical: "Temp_hydraulic_oil_group_C", unit: "degC" }
+  - { source: "sensor_38_avg",    canonical: "Temp_HV_transformer_phase_L1_C", unit: "degC" }
+  # ── electrical ──
+  - { source: "sensor_26_avg",    canonical: "Grid_freq_Hz_avg", unit: "Hz" }
+  - { source: "sensor_32_avg",    canonical: "Aver_voltage_ph1_V_avg", unit: "V" }
+  - { source: "sensor_31_avg",    canonical: "Grid_reactive_power_kVAr_avg", unit: "kVAr" }

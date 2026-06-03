@@ -1,0 +1,641 @@
+{
+  "generated_at": "2026-06-02T07:00:44.687925",
+  "model_version": "v2026.05.31.1247",
+  "headline": {
+    "honest_pr_auc_grouped": 0.818,
+    "leave_one_turbine_out_pr_auc": 0.76,
+    "claimed_balanced_accuracy": 0.7714,
+    "claimed_roc_auc": 0.9433,
+    "statement": "The deployable, leakage-safe headline is PR-AUC under a grouped split (0.818) and leave-one-turbine-out (0.76) \u2014 NOT the balanced multiclass accuracy/ROC from training. Report those, with the 10-min sampling and tiny-failure-count caveats, to any technical reviewer or insurer."
+  },
+  "provenance": {
+    "sampling_rate_seconds": 600.0,
+    "sampling_rate_human": "10-min averages",
+    "sampling_rate_warning": "Data is 10-minute AVERAGES. 10-min SCADA hides most early bearing/gear signatures that need 1-Hz raw or high-frequency vibration. Early-fault claims must be qualified accordingly.",
+    "total_rows": 1196747,
+    "fleet_row_positive_rate": 0.497,
+    "fleet_positive_rate_warning": "This ~50% positive rate is a BENCHMARK ARTIFACT \u2014 CARE to Compare pairs each anomaly window with normal windows. A real operating fleet sees ~0.1-1% failure-days. Metrics here are optimistic and will not transfer 1:1 to production.",
+    "turbines": [
+      {
+        "asset_id": 0,
+        "scada_channels": 81,
+        "rows": 272477,
+        "date_range": [
+          "2017-12-31T00:00:00",
+          "2023-06-18T11:40:00"
+        ],
+        "span_days": 1995,
+        "row_positive_rate": 0.597,
+        "n_events": 5,
+        "n_real_failures": 3,
+        "failure_modes": {
+          "Generator bearing failure": 1,
+          "Hydraulic group": 3
+        },
+        "status_code_distribution": {
+          "0": 207159,
+          "5": 59106,
+          "3": 6212
+        },
+        "coverage_note": "~95% of a continuous record (data is event-windowed, not continuous)"
+      },
+      {
+        "asset_id": 10,
+        "scada_channels": 81,
+        "rows": 274213,
+        "date_range": [
+          "2013-10-10T08:40:00",
+          "2023-09-19T15:50:00"
+        ],
+        "span_days": 3631,
+        "row_positive_rate": 0.597,
+        "n_events": 5,
+        "n_real_failures": 3,
+        "failure_modes": {
+          "Gearbox failure": 1,
+          "Generator bearing failure": 1,
+          "Hydraulic group": 1
+        },
+        "status_code_distribution": {
+          "0": 196313,
+          "5": 70719,
+          "3": 7181
+        },
+        "coverage_note": "~52% of a continuous record (data is event-windowed, not continuous)"
+      },
+      {
+        "asset_id": 11,
+        "scada_channels": 81,
+        "rows": 217950,
+        "date_range": [
+          "2014-07-29T13:20:00",
+          "2023-09-20T00:50:00"
+        ],
+        "span_days": 3339,
+        "row_positive_rate": 0.249,
+        "n_events": 4,
+        "n_real_failures": 1,
+        "failure_modes": {
+          "Transformer failure": 1
+        },
+        "status_code_distribution": {
+          "0": 168152,
+          "5": 48235,
+          "3": 1563
+        },
+        "coverage_note": "~45% of a continuous record (data is event-windowed, not continuous)"
+      },
+      {
+        "asset_id": 13,
+        "scada_channels": 81,
+        "rows": 216543,
+        "date_range": [
+          "2019-04-16T18:10:00",
+          "2022-09-12T15:30:00"
+        ],
+        "span_days": 1244,
+        "row_positive_rate": 0.496,
+        "n_events": 4,
+        "n_real_failures": 2,
+        "failure_modes": {
+          "Hydraulic group": 2
+        },
+        "status_code_distribution": {
+          "0": 158758,
+          "5": 40616,
+          "4": 13999,
+          "3": 3170
+        },
+        "coverage_note": "~121% of a continuous record (data is event-windowed, not continuous)"
+      },
+      {
+        "asset_id": 21,
+        "scada_channels": 81,
+        "rows": 215564,
+        "date_range": [
+          "2014-10-05T01:30:00",
+          "2023-05-24T10:20:00"
+        ],
+        "span_days": 3153,
+        "row_positive_rate": 0.497,
+        "n_events": 4,
+        "n_real_failures": 2,
+        "failure_modes": {
+          "Hydraulic group": 1,
+          "Gearbox failure": 1
+        },
+        "status_code_distribution": {
+          "0": 168290,
+          "5": 41711,
+          "3": 5563
+        },
+        "coverage_note": "~47% of a continuous record (data is event-windowed, not continuous)"
+      }
+    ],
+    "labeling_provenance": "Labels come from the CARE to Compare benchmark (real anonymised operating turbines, Fraunhofer IWES). Failure events carry a root-cause description (gearbox / generator bearing / hydraulic / transformer) but there are only a HANDFUL of real failure events across 5 turbines \u2014 too few to claim fleet-validated performance. Honest framing: method development, not validated deployment performance."
+  },
+  "feature_leakage_audit": {
+    "n_features": 32,
+    "features": [
+      {
+        "feature": "Temp_HV_transformer_phase_L3_C",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_HV_transformer_phase_L2_C",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_HV_transformer_phase_L1_C",
+        "category": "physical"
+      },
+      {
+        "feature": "hydraulic_temp_margin",
+        "category": "physical"
+      },
+      {
+        "feature": "Nac_direction",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_hydraulic_oil_group_C",
+        "category": "physical"
+      },
+      {
+        "feature": "Grid_reactive_power_kVAr_max",
+        "category": "physical"
+      },
+      {
+        "feature": "gen_bearing_DE_margin",
+        "category": "physical"
+      },
+      {
+        "feature": "Aver_voltage_ph1_V_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "gearbox_temp_margin",
+        "category": "physical"
+      },
+      {
+        "feature": "Aver_curr_ph1_A_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Aver_voltage_ph2_V_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_choke_coils_on_the_VCS_section_C_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Grid_reactive_power_kVAr_std",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_bearing_on_high_speed_shaft_C_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Pit_angle_max",
+        "category": "physical"
+      },
+      {
+        "feature": "Grid_reactive_power_kVAr_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Aver_voltage_ph3_V_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_gen_bearing_Drive_End_C_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Active_power_disconnected_Wh",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_in_stator_windings_ph1_C_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Grid_power_kW_std",
+        "category": "physical"
+      },
+      {
+        "feature": "Pit_angle_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Reactive_power_gen_disconnected_VArh",
+        "category": "physical"
+      },
+      {
+        "feature": "Grid_reactive_power_kVAr_min",
+        "category": "physical"
+      },
+      {
+        "feature": "Poss_cap_reactive_power_kVAr_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_top_nacelle_controller_C_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_VCS_cooling_water_C_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Temp_gen_bearing_Non_Drive_End_C_avg",
+        "category": "physical"
+      },
+      {
+        "feature": "Poss_cap_reactive_power_kVAr_std",
+        "category": "physical"
+      },
+      {
+        "feature": "gen_bearing_NDE_margin",
+        "category": "physical"
+      },
+      {
+        "feature": "power_per_wind",
+        "category": "physical"
+      }
+    ],
+    "status_or_alarm_features_in_model": [],
+    "status_type_id_excluded": true,
+    "verdict": "PASS \u2014 model uses only physical SCADA channels; status/alarm/mode codes (status_type_id) are excluded from features.",
+    "checks": {
+      "alarm_status_codes_removed": true,
+      "maintenance_action_flags_removed": true,
+      "no_oem_derived_health_bits": "PASS \u2014 CARE channels are raw physical signals (temperatures, power, currents, voltages, rpm); no OEM health/warning bits."
+    }
+  },
+  "split_comparison": {
+    "random_split": {
+      "base_rate": 0.5,
+      "n_test": 13201,
+      "test_positive": 6605,
+      "pr_auc": 0.919,
+      "pr_auc_lift_over_base": 1.84,
+      "roc_auc": 0.919,
+      "best_f1": 0.834,
+      "precision_at_best_f1": 0.774,
+      "recall_at_best_f1": 0.905,
+      "method": "Random 70/30 (LEAKY \u2014 adjacency)"
+    },
+    "group_by_event": {
+      "base_rate": 0.625,
+      "n_test": 16000,
+      "test_positive": 10000,
+      "pr_auc": 0.818,
+      "pr_auc_lift_over_base": 1.31,
+      "roc_auc": 0.73,
+      "best_f1": 0.803,
+      "precision_at_best_f1": 0.682,
+      "recall_at_best_f1": 0.975,
+      "method": "Grouped by event (no window spans the split)"
+    },
+    "leave_one_oem_out": {
+      "base_rate": 0.6,
+      "n_test": 10000,
+      "test_positive": 6000,
+      "pr_auc": 0.76,
+      "pr_auc_lift_over_base": 1.27,
+      "roc_auc": 0.716,
+      "best_f1": 0.783,
+      "precision_at_best_f1": 0.689,
+      "recall_at_best_f1": 0.907,
+      "method": "Train on 4 turbines, test on a completely unseen turbine (asset_id=0). On this dataset each turbine is treated as a distinct OEM \u2014 the closest available proxy for a Leave-One-OEM-Out test. NOTE: CARE is a single anonymised source, so OEM labels are assigned, not real; a true cross-OEM test needs multi-OEM data."
+    },
+    "purged_embargoed_time": {
+      "base_rate": 0.429,
+      "n_test": 14000,
+      "test_positive": 6000,
+      "pr_auc": 0.41,
+      "pr_auc_lift_over_base": 0.96,
+      "roc_auc": 0.447,
+      "best_f1": 0.6,
+      "precision_at_best_f1": 0.429,
+      "recall_at_best_f1": 1.0,
+      "method": "Train on data up to 2021-09-06, PURGE a 30-day embargo window (1399 rows removed), then test on the future block. The deployment-realistic split."
+    },
+    "blocked_by_time": {
+      "base_rate": 0.429,
+      "n_test": 14000,
+      "test_positive": 6000,
+      "pr_auc": 0.41,
+      "pr_auc_lift_over_base": 0.96,
+      "roc_auc": 0.447,
+      "best_f1": 0.6,
+      "precision_at_best_f1": 0.429,
+      "recall_at_best_f1": 1.0,
+      "method": "Train on data up to 2021-09-06, PURGE a 30-day embargo window (1399 rows removed), then test on the future block. The deployment-realistic split."
+    },
+    "leave_one_turbine_out": {
+      "base_rate": 0.6,
+      "n_test": 10000,
+      "test_positive": 6000,
+      "pr_auc": 0.76,
+      "pr_auc_lift_over_base": 1.27,
+      "roc_auc": 0.716,
+      "best_f1": 0.783,
+      "precision_at_best_f1": 0.689,
+      "recall_at_best_f1": 0.907,
+      "method": "Train on 4 turbines, test on a completely unseen turbine (asset_id=0). On this dataset each turbine is treated as a distinct OEM \u2014 the closest available proxy for a Leave-One-OEM-Out test. NOTE: CARE is a single anonymised source, so OEM labels are assigned, not real; a true cross-OEM test needs multi-OEM data."
+    },
+    "interpretation": "Random split PR-AUC = 0.919 vs leakage-safe (grouped) PR-AUC = 0.818. The drop confirms the random-split score was inflated by temporal-adjacency leakage. The grouped/blocked numbers are the defensible ones."
+  },
+  "permutation_test": {
+    "real_label_pr_auc": 0.818,
+    "shuffled_label_pr_auc": 0.506,
+    "base_rate": 0.625,
+    "verdict": "PASS \u2014 with labels shuffled, PR-AUC collapses to ~base rate (0.625), so the real model (0.818) is learning genuine signal, not exploiting the evaluation.",
+    "passed": true
+  },
+  "embargo_test": {
+    "embargo_days": 3,
+    "with_late_window_pr_auc": 0.818,
+    "embargoed_pr_auc": 0.76,
+    "rows_removed": 4752,
+    "interpretation": "Removing the last 3 days before each failure drops PR-AUC by 0.058. Small drop \u2014 the model retains predictive power from earlier, subtler signals."
+  },
+  "binary_scoreboard": {
+    "pr_auc": 0.818,
+    "precision_at_k": {
+      "P@5": 1.0,
+      "P@10": 1.0,
+      "P@20": 1.0
+    },
+    "lead_time": {
+      "anomaly_events_in_test": 5,
+      "detected": 5,
+      "detection_rate": 1.0,
+      "mean_lead_days": 380.2,
+      "median_lead_days": 376.9,
+      "note": "Lead time = days between the first alert (P>=0.5) and the true failure time.",
+      "label_warning": "Mean lead-time far exceeds a typical 7-31 day event window. This is a RED FLAG that the positive window is mis-defined: baseline ('train'-split) rows of each anomaly event are currently labelled positive, so the model 'alerts' on normal baseline data. Fix the label (positives = prediction-window only) before any lead-time claim."
+    },
+    "rul_asymmetric": {
+      "amae_5x_overestimate": 41.62,
+      "plain_mae_days": 41.62,
+      "overestimate_rate": 0.0,
+      "note": "AMAE penalises over-estimating RUL (saying 20 days when it is 5) 5x harder than under-estimating. Current RUL is a heuristic, not a trained regressor \u2014 this number quantifies how far it is from trustworthy crane-scheduling."
+    },
+    "headline_metric": "PR-AUC + Precision@K + warning lead-time (NOT accuracy/ROC)."
+  },
+  "multiclass_scoreboard": {
+    "available": true,
+    "macro_f1": 0.239,
+    "per_class_recall": {
+      "Normal": 0.994,
+      "Gearbox": 0.0,
+      "Hydraulic": 0.153,
+      "Transformer": 0.0
+    },
+    "confusion_matrix": {
+      "labels": [
+        "Normal",
+        "Gearbox",
+        "Hydraulic",
+        "Transformer"
+      ],
+      "matrix": [
+        [
+          5961,
+          0,
+          17,
+          22
+        ],
+        [
+          1948,
+          0,
+          17,
+          35
+        ],
+        [
+          3358,
+          0,
+          613,
+          29
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "high_severity_downgrade_rate": 1.0,
+    "note": "Macro-F1 weights every failure mode equally. The high-severity downgrade rate is the share of real gearbox/generator failures the model labelled as a lower-severity fault \u2014 the costly error class."
+  },
+  "explainability_integrity": {
+    "perturbation_test": {
+      "baseline_risk": 0.2604,
+      "signals": [
+        {
+          "signal": "Temp_gen_bearing_Drive_End_C_avg",
+          "delta_applied": 12.0,
+          "risk_change": 0.0148,
+          "direction_ok": true
+        },
+        {
+          "signal": "Temp_gen_bearing_Non_Drive_End_C_avg",
+          "delta_applied": 12.0,
+          "risk_change": 0.0268,
+          "direction_ok": true
+        },
+        {
+          "signal": "Temp_hydraulic_oil_group_C",
+          "delta_applied": 12.0,
+          "risk_change": 0.0173,
+          "direction_ok": true
+        },
+        {
+          "signal": "Temp_HV_transformer_phase_L1_C",
+          "delta_applied": 12.0,
+          "risk_change": -0.0025,
+          "direction_ok": false
+        },
+        {
+          "signal": "gearbox_temp_margin",
+          "delta_applied": 10.0,
+          "risk_change": -0.0366,
+          "direction_ok": false
+        },
+        {
+          "signal": "gen_bearing_DE_margin",
+          "delta_applied": 10.0,
+          "risk_change": -0.0052,
+          "direction_ok": false
+        },
+        {
+          "signal": "hydraulic_temp_margin",
+          "delta_applied": 10.0,
+          "risk_change": -0.1192,
+          "direction_ok": false
+        }
+      ],
+      "passed": false,
+      "verdict": "WARNING \u2014 some degradation signals did NOT raise risk when increased; the model is not reasoning causally for those channels."
+    },
+    "stability_test": {
+      "top3_jaccard_after_1pct_noise": 0.818,
+      "passed": true,
+      "note": "Top-3 SHAP feature overlap after adding 1% noise. <0.6 means explanations are unstable \u2014 collinear signals trading places."
+    },
+    "global_alignment": {
+      "dominant_anomaly_mode": "Generator",
+      "alignment_score": 0.128,
+      "top_drivers": [
+        {
+          "feature": "hydraulic_temp_margin",
+          "pct": 19.9,
+          "expected": false,
+          "group": null
+        },
+        {
+          "feature": "Temp_HV_transformer_phase_L3_C",
+          "pct": 14.7,
+          "expected": false,
+          "group": "Thermal cluster (collinear)"
+        },
+        {
+          "feature": "Temp_choke_coils_on_the_VCS_section_C_avg",
+          "pct": 9.1,
+          "expected": false,
+          "group": "Thermal cluster (collinear)"
+        },
+        {
+          "feature": "Temp_HV_transformer_phase_L1_C",
+          "pct": 6.4,
+          "expected": false,
+          "group": "Thermal cluster (collinear)"
+        },
+        {
+          "feature": "Temp_hydraulic_oil_group_C",
+          "pct": 6.2,
+          "expected": false,
+          "group": null
+        },
+        {
+          "feature": "Temp_HV_transformer_phase_L2_C",
+          "pct": 5.8,
+          "expected": false,
+          "group": "Thermal cluster (collinear)"
+        }
+      ],
+      "note": "Per-prediction physical alignment + collinearity flags are also shown live on each turbine's SHAP panel."
+    }
+  },
+  "calibration": {
+    "brier_score": 0.4463,
+    "ece": 0.433,
+    "reliability_diagram": [
+      {
+        "bin": 0.05,
+        "predicted": 0.036,
+        "observed": 0.432,
+        "n": 3324
+      },
+      {
+        "bin": 0.15,
+        "predicted": 0.143,
+        "observed": 0.69,
+        "n": 1066
+      },
+      {
+        "bin": 0.25,
+        "predicted": 0.25,
+        "observed": 0.715,
+        "n": 628
+      },
+      {
+        "bin": 0.35,
+        "predicted": 0.349,
+        "observed": 0.652,
+        "n": 620
+      },
+      {
+        "bin": 0.45,
+        "predicted": 0.448,
+        "observed": 0.687,
+        "n": 547
+      },
+      {
+        "bin": 0.55,
+        "predicted": 0.548,
+        "observed": 0.602,
+        "n": 442
+      },
+      {
+        "bin": 0.65,
+        "predicted": 0.651,
+        "observed": 0.539,
+        "n": 519
+      },
+      {
+        "bin": 0.75,
+        "predicted": 0.745,
+        "observed": 0.575,
+        "n": 379
+      },
+      {
+        "bin": 0.85,
+        "predicted": 0.853,
+        "observed": 0.538,
+        "n": 357
+      },
+      {
+        "bin": 0.95,
+        "predicted": 0.988,
+        "observed": 0.399,
+        "n": 4118
+      }
+    ],
+    "isotonic": {
+      "brier_score": 0.2515,
+      "ece": 0.141,
+      "reliability_diagram": [
+        {
+          "bin": 0.05,
+          "predicted": 0.001,
+          "observed": 0.08,
+          "n": 1130
+        },
+        {
+          "bin": 0.15,
+          "predicted": 0.15,
+          "observed": 0.286,
+          "n": 14
+        },
+        {
+          "bin": 0.25,
+          "predicted": 0.249,
+          "observed": 0.422,
+          "n": 161
+        },
+        {
+          "bin": 0.35,
+          "predicted": 0.334,
+          "observed": 0.462,
+          "n": 398
+        },
+        {
+          "bin": 0.45,
+          "predicted": 0.401,
+          "observed": 0.549,
+          "n": 10297
+        }
+      ]
+    },
+    "verdict": "NEEDS CALIBRATION \u2014 ECE 0.433 / Brier 0.4463 show the raw probabilities are mis-stated. Isotonic regression improves ECE to 0.141 / Brier 0.2515. Apply isotonic before the probability feeds the Expected-Loss risk score.",
+    "note": "Every Expected-Loss \u20ac figure multiplies this probability \u2014 if it is mis-calibrated, the money ranking inherits the error. Calibrate first."
+  },
+  "elapsed_seconds": 61.0
+}

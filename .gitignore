@@ -1,0 +1,23 @@
+# ── Data (huge — never commit; seed into Supabase instead) ──
+Data/
+*.csv
+
+# ── Local database & secrets ──
+*.db
+backend/windsense.db
+.env
+backend/.env
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# ── OS / editor ──
+.DS_Store
+Thumbs.db
+
+# NOTE: backend/ml/artifacts/*.joblib and validation_report.json ARE committed
+# (the production backend needs the trained model; it cannot retrain without the CSV).

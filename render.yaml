@@ -1,0 +1,29 @@
+# ════════════════════════════════════════════════════════════════════
+#  Render blueprint — WindSense AI backend (FastAPI)
+#  Frontend deploys separately on Vercel; database is your Supabase Postgres.
+#
+#  In Render: New → Blueprint → connect this repo. Then set the two
+#  secret env vars (DATABASE_URL) in the dashboard (marked sync:false).
+# ════════════════════════════════════════════════════════════════════
+services:
+  - type: web
+    name: windsense-api
+    runtime: python
+    rootDir: backend                 # app uses `from config import ...` -> run from backend/
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: AUTH_MODE
+        value: "jwt"                 # verify Supabase login tokens (ES256 via JWKS)
+      - key: SUPABASE_URL
+        value: "https://tegudhuanbwczeoykkxp.supabase.co"
+      - key: DATABASE_URL
+        sync: false                  # ← set in Render dashboard (Supabase Postgres URI)
+      - key: CORS_ORIGINS
+        value: "*"                   # ← tighten to your Vercel domain after first deploy
+      - key: MODEL_DIR
+        value: ""                    # anchored to backend/ml/artifacts

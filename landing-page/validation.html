@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ML Validation & Testing — WindSense AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    :root{
+      --navy:#09192A; --navy-mid:#0F2337; --steel:#1A3A5C;
+      --teal:#0A8C7C; --teal-b:#0DB39E; --teal-dim:rgba(13,179,158,.1);
+      --green:#16A34A; --green-l:#22C55E; --green-dim:rgba(22,163,74,.1);
+      --amber:#D97706; --amber-dim:rgba(217,119,6,.1);
+      --red:#DC2626; --red-dim:rgba(220,38,38,.1);
+      --g50:#F8FAFC; --g100:#F1F5F9; --g200:#E2E8F0; --g300:#CBD5E1;
+      --g400:#94A3B8; --g500:#64748B; --g700:#334155; --g900:#0F172A; --white:#FFF;
+      --f:'Inter',sans-serif; --fm:'JetBrains Mono',monospace; --sidebar:240px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:var(--f);background:var(--g50);color:var(--g700);-webkit-font-smoothing:antialiased;line-height:1.55;display:flex}
+    a{color:var(--teal);text-decoration:none}
+
+    /* ── Sidebar (identical to dashboard) ──────────────────────────── */
+    .sidebar{width:var(--sidebar);flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
+    .sb-logo{display:flex;align-items:center;gap:9px;padding:20px 20px 16px;font-size:16px;font-weight:700;color:var(--white);border-bottom:1px solid rgba(255,255,255,.06);text-decoration:none}
+    .sb-logo span{color:var(--teal-b)}
+    .sb-section-label{font-family:var(--fm);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.25);padding:20px 20px 6px}
+    .sb-nav{list-style:none;padding:0 10px}
+    .sb-nav li{margin-bottom:2px}
+    .sb-nav a,.sb-nav button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:6px;font-size:13px;font-weight:500;color:rgba(255,255,255,.55);text-decoration:none;background:none;border:none;cursor:pointer;transition:.15s;text-align:left}
+    .sb-nav a:hover,.sb-nav button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+    .sb-nav a.active{background:rgba(13,179,158,.12);color:var(--teal-b);font-weight:600}
+    .sb-nav svg{opacity:.5;flex-shrink:0}
+    .sb-nav a.active svg{opacity:1}
+    .sb-badge{margin-left:auto;background:var(--red);color:var(--white);font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;font-family:var(--fm)}
+    .sb-user{margin-top:auto;padding:14px 16px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px}
+    .sb-avatar{width:32px;height:32px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--white);flex-shrink:0}
+    .sb-user-info{flex:1;min-width:0}
+    .sb-user-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sb-user-role{font-size:10px;color:rgba(255,255,255,.35);font-family:var(--fm)}
+    .sb-signout{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3);padding:4px;border-radius:4px;transition:.15s}
+    .sb-signout:hover{color:rgba(255,255,255,.7)}
+
+    /* ── Main ──────────────────────────────────────────────────────── */
+    .main{flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+    .topbar{background:#fff;border-bottom:1px solid var(--g200);padding:0 28px;min-height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+    .topbar h1{font-size:16px;font-weight:700;color:var(--navy)}
+    .topbar .crumb{font-size:12px;color:var(--g400);font-family:var(--fm)}
+    .live-pill{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:11px;color:var(--green);background:var(--green-dim);border:1px solid rgba(22,163,74,.2);padding:4px 10px;border-radius:20px}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green-l)}
+
+    .vcontent{padding:24px 28px;max-width:1080px}
+    .runbar{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:.15s}
+    .btn-primary{background:var(--teal);color:#fff}
+    .btn-primary:hover{background:var(--teal-b)}
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+    .status{font-size:13px;font-family:var(--fm);color:var(--g500)}
+
+    section{margin-bottom:28px}
+    .card{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+    .sec-label{font-family:var(--fm);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--g400);margin-bottom:6px}
+    h2.sec{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:4px}
+    .sec-sub{font-size:13px;color:var(--g500);margin-bottom:18px}
+
+    .headline{background:var(--navy);color:#fff;border:none}
+    .headline .row{display:flex;gap:28px;flex-wrap:wrap;margin-bottom:18px}
+    .metric{flex:1;min-width:150px}
+    .metric .lbl{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px}
+    .metric .val{font-family:var(--fm);font-size:34px;font-weight:700}
+    .metric .val.good{color:var(--teal-b)} .metric .val.warn{color:#fbbf24} .metric .val.bad{color:#f87171}
+    .metric .sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px}
+    .headline .statement{font-size:14px;line-height:1.7;color:rgba(255,255,255,.8);background:rgba(255,255,255,.05);border-left:3px solid var(--teal);padding:14px 16px;border-radius:0 8px 8px 0}
+
+    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:var(--fm)}
+    .pill.pass{background:var(--green-dim);color:var(--green)} .pill.warn{background:var(--amber-dim);color:var(--amber)} .pill.fail{background:var(--red-dim);color:var(--red)}
+
+    .bar-row{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+    .bar-name{width:230px;flex-shrink:0;font-size:13px}
+    .bar-name strong{display:block;color:var(--navy);font-weight:600}
+    .bar-name span{font-size:11px;color:var(--g400)}
+    .bar-track{flex:1;height:26px;background:var(--g100);border-radius:6px;position:relative;overflow:hidden}
+    .bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-family:var(--fm);font-size:12px;font-weight:700;color:#fff}
+    .bar-base{position:absolute;top:0;bottom:0;width:2px;background:var(--g500);z-index:2}
+    .bar-base::after{content:'base';position:absolute;top:-15px;left:-12px;font-size:8px;color:var(--g500);font-family:var(--fm)}
+    .interp{margin-top:8px;font-size:13px;color:var(--g700);line-height:1.7;background:var(--g50);border-radius:8px;padding:14px 16px}
+
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--g400);background:var(--g50);border-bottom:1px solid var(--g200)}
+    td{padding:10px 12px;border-bottom:1px solid var(--g100)}
+    td.mono{font-family:var(--fm)}
+    tr:last-child td{border-bottom:none}
+
+    .check-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--g100);font-size:14px}
+    .check-row:last-child{border-bottom:none}
+    .ck{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+    .ck.ok{background:var(--green-dim);color:var(--green)} .ck.no{background:var(--red-dim);color:var(--red)}
+
+    .warnbox{background:var(--amber-dim);border:1px solid rgba(217,119,6,.25);border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;line-height:1.7;margin-bottom:12px}
+    .warnbox strong{color:var(--amber)}
+    .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:760px){.twocol{grid-template-columns:1fr}.bar-name{width:140px}}
+
+    .loading{text-align:center;padding:60px;color:var(--g400);font-family:var(--fm);font-size:14px}
+    .spinner{width:36px;height:36px;border:3px solid var(--g200);border-top-color:var(--teal);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--g200);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ──────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <a href="dashboard.html" class="sb-logo">
+    <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="3.5" fill="#0DB39E"/><path d="M16 12.5C14 8 10 4 12 2s5 4 4 10.5Z" fill="#0DB39E" opacity=".9"/><path d="M16 12.5C20.3 10.4 25.6 10 26.8 12.5S22 16.5 16 12.5Z" fill="#0DB39E" opacity=".65"/><path d="M16 12.5C11.7 10.4 6.4 10 5.2 12.5S10 16.5 16 12.5Z" fill="#0DB39E" opacity=".45"/><circle cx="16" cy="16" r="2" fill="#09192A"/></svg>
+    Wind<span>Sense</span>&nbsp;AI
+  </a>
+
+  <div class="sb-section-label">Monitoring</div>
+  <ul class="sb-nav">
+    <li><a href="dashboard.html?screen=fleet">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+      Fleet Command</a></li>
+    <li><a href="dashboard.html?screen=predictions">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M2 11l3-4 3 3 3-5 4 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="3" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+      ML Predictions</a></li>
+    <li><a href="dashboard.html?screen=riskqueue">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Risk Queue</a></li>
+    <li><a href="dashboard.html?screen=scada">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 9l2-3 2 2 2-4 3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      SCADA Trends</a></li>
+  </ul>
+
+  <div class="sb-section-label">Reliability</div>
+  <ul class="sb-nav">
+    <li><a href="dashboard.html?screen=certs">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M8 1L2 4v6c0 3 2.7 5.5 6 6 3.3-.5 6-3 6-6V4L8 1Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Asset Health Certs</a></li>
+    <li><a href="dashboard.html?screen=workorders">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 3V2a1 1 0 012 0v1M9 3V2a1 1 0 012 0v1M4 8h8M4 11h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Work Orders</a></li>
+    <li><a href="validation.html" class="active">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M8 1.5l5.5 2.5v4c0 3.5-2.4 5.8-5.5 6.5C4.9 13.8 2.5 11.5 2.5 8V4L8 1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 8.2l1.4 1.4L10.5 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      ML Validation</a></li>
+  </ul>
+
+  <div class="sb-section-label">Operations</div>
+  <ul class="sb-nav">
+    <li><a href="onboarding.html">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="13" cy="12" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+      Onboarding &amp; DQ</a></li>
+  </ul>
+
+  <div class="sb-section-label">Account</div>
+  <ul class="sb-nav">
+    <li><a href="dashboard.html?screen=settings">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Settings</a></li>
+    <li><button onclick="handleSignOut()">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Sign Out</button></li>
+  </ul>
+
+  <div class="sb-user">
+    <div class="sb-avatar" id="user-avatar">WS</div>
+    <div class="sb-user-info">
+      <div class="sb-user-name" id="user-name">Wind Operator</div>
+      <div class="sb-user-role" id="user-role">RELIABILITY ENGINEER</div>
+    </div>
+    <button class="sb-signout" onclick="handleSignOut()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><path d="M10 11l3-3-3-3M13 8H6M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</aside>
+
+<!-- ── MAIN ─────────────────────────────────────────────────────────── -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>ML Validation &amp; Testing</h1>
+      <div class="crumb" id="subtitle">Prove, don't assert · leakage-safe metrics</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn btn-primary" id="run-btn" style="padding:8px 16px" onclick="runValidation()">↻ Re-run suite</button>
+      <span class="status" id="run-status"></span>
+    </div>
+  </div>
+
+  <div class="vcontent">
+    <div id="content">
+      <div class="loading"><div class="spinner"></div>Loading validation report…</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const API_ROOT = window.WS_API_ROOT || "http://localhost:8000";
+const API = API_ROOT + "/api";
+let sb = null;
+try { if (SUPABASE_URL !== "YOUR_SUPABASE_URL_HERE") sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){}
+
+async function handleSignOut(){ try{ if(sb) await sb.auth.signOut(); }catch(e){} window.location.href='login.html'; }
+
+async function setUser(){
+  try{
+    if(sb){ const {data}=await sb.auth.getSession();
+      if(data&&data.session){ const u=data.session.user; const name=(u.user_metadata&&u.user_metadata.first_name)?`${u.user_metadata.first_name} ${u.user_metadata.last_name||''}`.trim():(u.email||'Operator').split('@')[0];
+        document.getElementById('user-name').textContent=name;
+        document.getElementById('user-avatar').textContent=name.slice(0,2).toUpperCase();
+        if(u.user_metadata&&u.user_metadata.company) document.getElementById('user-role').textContent=u.user_metadata.company.toUpperCase().slice(0,22);
+      }
+    }
+  }catch(e){}
+}
+
+async function authHeader(){
+  const h = {};
+  try { if (sb){ const {data}=await sb.auth.getSession(); if(data&&data.session){ h.Authorization="Bearer "+data.session.access_token; if(data.session.user&&data.session.user.email) h["X-WS-User-Email"]=data.session.user.email; } } } catch(e){}
+  return h;
+}
+async function apiGet(p){ const r=await fetch(API+p,{headers:await authHeader()}); if(!r.ok) throw new Error(r.status); return r.json(); }
+async function apiPost(p){ const r=await fetch(API+p,{method:"POST",headers:await authHeader()}); if(!r.ok) throw new Error(r.status); return r.json(); }
+
+const f3 = (x)=> (x==null?"—":Number(x).toFixed(3));
+function barColor(kind){ return {leaky:"#D97706",defensible:"#0A8C7C",reality:"#DC2626"}[kind]; }
+function splitBar(name, sub, val, base, kind){
+  const pct = Math.min(100, (val||0)*100), basePct = Math.min(100,(base||0)*100);
+  return `<div class="bar-row"><div class="bar-name"><strong>${name}</strong><span>${sub}</span></div>
+    <div class="bar-track"><div class="bar-base" style="left:${basePct}%"></div>
+    <div class="bar-fill" style="width:${pct}%;background:${barColor(kind)}">${f3(val)}</div></div></div>`;
+}
+
+function render(rep){
+  const h=rep.headline, sc=rep.split_comparison, perm=rep.permutation_test,
+        emb=rep.embargo_test, audit=rep.feature_leakage_audit, prov=rep.provenance;
+  document.getElementById('subtitle').textContent =
+    `Model ${rep.model_version} · generated ${new Date(rep.generated_at).toLocaleString()} · ${rep.elapsed_seconds}s`;
+  const totalFail = prov.turbines.reduce((s,t)=>s+t.n_real_failures,0);
+  let html = "";
+
+  html += `<section><div class="card headline">
+    <div class="sec-label" style="color:rgba(255,255,255,.5)">Honest Headline</div>
+    <div class="row">
+      <div class="metric"><div class="lbl">Leakage-safe PR-AUC (grouped)</div><div class="val good">${f3(h.honest_pr_auc_grouped)}</div><div class="sub">defensible</div></div>
+      <div class="metric"><div class="lbl">Leave-one-turbine-out PR-AUC</div><div class="val warn">${f3(h.leave_one_turbine_out_pr_auc)}</div><div class="sub">unseen turbine</div></div>
+      <div class="metric"><div class="lbl">Forward-in-time PR-AUC</div><div class="val bad">${f3(sc.blocked_by_time.pr_auc)}</div><div class="sub">deployment reality</div></div>
+      <div class="metric"><div class="lbl">Training-reported accuracy</div><div class="val" style="color:rgba(255,255,255,.5)">${h.claimed_balanced_accuracy!=null?(h.claimed_balanced_accuracy*100).toFixed(1)+'%':'—'}</div><div class="sub">balanced · inflated</div></div>
+    </div>
+    <div class="statement">${h.statement}</div></div></section>`;
+
+  html += `<section><div class="card">
+    <div class="sec-label">Test 3 · Split Methodology</div>
+    <h2 class="sec">How much was the score inflated by leakage?</h2>
+    <div class="sec-sub">PR-AUC under four splits. The grey line marks the base rate (chance). Random = leaky; grouped/turbine = defensible; forward-in-time = deployment reality.</div>
+    ${splitBar("Random 70/30","current method — adjacency leakage",sc.random_split.pr_auc,sc.random_split.base_rate,"leaky")}
+    ${splitBar("Grouped by event","no window spans the split",sc.group_by_event.pr_auc,sc.group_by_event.base_rate,"defensible")}
+    ${splitBar("Leave-one-turbine-out","tested on a turbine never seen",sc.leave_one_turbine_out.pr_auc,sc.leave_one_turbine_out.base_rate,"defensible")}
+    ${splitBar("Forward-in-time","train on past, predict future",sc.blocked_by_time.pr_auc,sc.blocked_by_time.base_rate,"reality")}
+    <div class="interp">${sc.interpretation}<br/><br/><strong>Forward-in-time</strong> (train past → predict future) is the true deployment scenario: PR-AUC ${f3(sc.blocked_by_time.pr_auc)} vs base ${f3(sc.blocked_by_time.base_rate)}, ROC ${f3(sc.blocked_by_time.roc_auc)}. With only ${totalFail} real failures across 5 turbines, genuine forecasting of unseen future failures is not yet established — the honest gap to close with more labeled failures.</div></div></section>`;
+
+  /* ── Binary scoreboard: the right numbers ── */
+  const sb = rep.binary_scoreboard, lt = sb && sb.lead_time, ra = sb && sb.rul_asymmetric;
+  if (sb) {
+    const pk = sb.precision_at_k || {};
+    html += `<section><div class="card">
+      <div class="sec-label">The Scoreboard · Binary "will it fail in X days?"</div>
+      <h2 class="sec">Operator-relevant metrics (not accuracy/ROC)</h2>
+      <div class="sec-sub">What an operator actually does: act on the top few alerts, and need enough days of warning to schedule a crew.</div>
+      <div class="row" style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:8px">
+        <div class="metric" style="min-width:120px"><div class="lbl" style="color:var(--g500)">PR-AUC (grouped)</div><div class="val good" style="font-size:28px;color:var(--teal)">${f3(sb.pr_auc)}</div></div>
+        <div class="metric" style="min-width:120px"><div class="lbl" style="color:var(--g500)">Precision @ top-5 / 10 / 20</div><div class="val" style="font-size:22px;color:var(--navy)">${f3(pk['P@5'])} · ${f3(pk['P@10'])} · ${f3(pk['P@20'])}</div></div>
+        <div class="metric" style="min-width:140px"><div class="lbl" style="color:var(--g500)">Avg warning lead-time</div><div class="val" style="font-size:22px;color:var(--navy)">${lt&&lt.mean_lead_days!=null?lt.mean_lead_days+' d':'—'}</div><div class="sub" style="color:var(--g400)">detection ${lt?(lt.detection_rate*100).toFixed(0)+'%':'—'} · ${lt?lt.anomaly_events_in_test:0} events</div></div>
+        <div class="metric" style="min-width:140px"><div class="lbl" style="color:var(--g500)">RUL AMAE (5× overestimate)</div><div class="val bad" style="font-size:22px;color:${ra&&ra.amae_5x_overestimate>20?'var(--red)':'var(--navy)'}">${ra?ra.amae_5x_overestimate+' d':'—'}</div><div class="sub" style="color:var(--g400)">plain MAE ${ra?ra.plain_mae_days:'—'} d · overest ${ra?(ra.overestimate_rate*100).toFixed(0)+'%':'—'}</div></div>
+      </div>
+      ${lt&&lt.label_warning?`<div class="warnbox" style="margin-top:12px"><strong>Label-definition red flag:</strong> ${lt.label_warning}</div>`:''}
+      <div class="interp" style="margin-top:8px"><strong>RUL:</strong> ${ra?ra.note:''}</div>
+    </div></section>`;
+  }
+
+  /* ── Multi-class failure mode ── */
+  const mc = rep.multiclass_scoreboard;
+  if (mc && mc.available) {
+    const cm = mc.confusion_matrix;
+    const recalls = mc.per_class_recall || {};
+    const recallRows = Object.keys(recalls).map(k=>{
+      const v=recalls[k], col = v>=0.6?'var(--green)':v>=0.3?'var(--amber)':'var(--red)';
+      return `<div class="bar-row"><div class="bar-name" style="width:120px"><strong>${k}</strong></div>
+        <div class="bar-track" style="height:20px"><div class="bar-fill" style="width:${(v*100)}%;background:${col}">${f3(v)}</div></div></div>`;
+    }).join('');
+    const hs = mc.high_severity_downgrade_rate;
+    html += `<section><div class="card">
+      <div class="sec-label">The Scoreboard · Multi-class "which part fails?"</div>
+      <h2 class="sec">Failure-mode identification under a leakage-safe split</h2>
+      <div class="sec-sub">Macro-F1 weights every mode equally. Per-class recall + confusion matrix expose which faults are missed. ${mc.note}</div>
+      <div class="row" style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="metric" style="min-width:120px"><div class="lbl" style="color:var(--g500)">Macro-F1</div><div class="val ${mc.macro_f1>=0.6?'good':'bad'}" style="font-size:28px;color:${mc.macro_f1>=0.6?'var(--teal)':'var(--red)'}">${f3(mc.macro_f1)}</div></div>
+        <div class="metric" style="min-width:200px"><div class="lbl" style="color:var(--g500)">High-severity downgrade rate</div><div class="val bad" style="font-size:28px;color:${hs>=0.5?'var(--red)':'var(--amber)'}">${hs!=null?(hs*100).toFixed(0)+'%':'—'}</div><div class="sub" style="color:var(--g400)">gearbox/generator failures called something milder</div></div>
+      </div>
+      <div class="twocol">
+        <div><div class="sec-label" style="margin-bottom:10px">Per-class recall</div>${recallRows}</div>
+        <div><div class="sec-label" style="margin-bottom:10px">Confusion matrix (rows = true)</div>
+          <table style="font-size:11px"><thead><tr><th>true ↓ / pred →</th>${cm.labels.map(l=>`<th>${l}</th>`).join('')}</tr></thead>
+          <tbody>${cm.matrix.map((row,i)=>`<tr><td class="mono" style="font-weight:600">${cm.labels[i]}</td>${row.map((v,j)=>`<td class="mono" style="text-align:center;background:${i===j?'rgba(22,163,74,.08)':v>0?'rgba(220,38,38,.06)':'transparent'}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table>
+        </div>
+      </div>
+      ${hs>=0.5?`<div class="warnbox" style="margin-top:14px"><strong>Critical weakness:</strong> ${(hs*100).toFixed(0)}% of real gearbox/generator failures on unseen events are classified as a lower-severity fault. Failure-mode identification is NOT yet deployable — only the binary "something is wrong" signal is.</div>`:''}
+    </div></section>`;
+  }
+
+  /* ── Explainability integrity (SHAP physics) ── */
+  const ex = rep.explainability_integrity;
+  if (ex) {
+    const pt = ex.perturbation_test, st = ex.stability_test, ga = ex.global_alignment;
+    const ptRows = (pt.signals||[]).map(s=>{
+      const col = s.direction_ok ? 'var(--green)' : 'var(--red)';
+      return `<tr><td class="mono" style="font-size:11px">${s.signal}</td>
+        <td class="mono" style="text-align:right">+${s.delta_applied}</td>
+        <td class="mono" style="text-align:right;color:${col};font-weight:700">${s.risk_change>=0?'+':''}${s.risk_change}</td>
+        <td style="text-align:center">${s.direction_ok?'<span class="pill pass" style="padding:2px 8px">OK</span>':'<span class="pill fail" style="padding:2px 8px">backwards</span>'}</td></tr>`;
+    }).join('');
+    const driverRows = (ga.top_drivers||[]).map(d=>{
+      const col = d.expected ? 'var(--green)' : 'var(--amber)';
+      return `<tr><td class="mono" style="font-size:11px">${d.feature}${d.expected?'':' &#9888;'}</td>
+        <td class="mono" style="text-align:right">${d.pct}%</td>
+        <td style="text-align:center;color:${col};font-weight:600">${d.expected?'expected':'unexpected'}</td>
+        <td style="font-size:11px;color:var(--g400)">${d.group||'—'}</td></tr>`;
+    }).join('');
+    html += `<section><div class="card">
+      <div class="sec-label">Test 6 · Explainability Integrity (SHAP physics)</div>
+      <h2 class="sec">Does the explanation reflect physics, or coincidence?</h2>
+      <div class="sec-sub">SHAP can be theatre. We test causal response (perturbation), stability, and physical alignment of the drivers.</div>
+      <div class="twocol">
+        <div>
+          <div class="sec-label" style="margin-bottom:8px">Perturbation / causal test</div>
+          <div class="sec-sub" style="font-size:12px">Raise a degradation signal → predicted risk must rise. This is the empirical monotonicity check.</div>
+          <table><thead><tr><th>Signal raised</th><th>Δ</th><th>Risk change</th><th>Dir.</th></tr></thead><tbody>${ptRows}</tbody></table>
+          <div style="margin-top:12px"><span class="pill ${pt.passed?'pass':'fail'}">${pt.passed?'✓ PASS':'⚠ WARNING'}</span></div>
+          <div class="interp" style="margin-top:10px">${pt.verdict}</div>
+        </div>
+        <div>
+          <div class="sec-label" style="margin-bottom:8px">Stability &amp; physical alignment</div>
+          <table><tr><td>SHAP top-3 stability (1% noise)</td><td class="mono" style="text-align:right;font-weight:700">${st&&st.top3_jaccard_after_1pct_noise!=null?st.top3_jaccard_after_1pct_noise:'—'}</td></tr>
+            <tr><td>Dominant anomaly mode</td><td class="mono" style="text-align:right">${ga.dominant_anomaly_mode||'—'}</td></tr>
+            <tr><td>Driver physical-alignment</td><td class="mono" style="text-align:right;font-weight:700;color:${ga.alignment_score>=0.6?'var(--green)':ga.alignment_score>=0.3?'var(--amber)':'var(--red)'}">${ga.alignment_score!=null?(ga.alignment_score*100).toFixed(0)+'%':'—'}</td></tr></table>
+          <div class="sec-label" style="margin:14px 0 8px">Top global drivers vs physics</div>
+          <table><thead><tr><th>Feature</th><th>%</th><th>Physics</th><th>Collinear group</th></tr></thead><tbody>${driverRows}</tbody></table>
+        </div>
+      </div>
+      ${(ga.alignment_score!=null&&ga.alignment_score<0.3)||!pt.passed?`<div class="warnbox" style="margin-top:14px"><strong>Explainability red flag:</strong> drivers are weakly aligned to the physics of the predicted mode, and/or some degradation signals move risk the wrong way. Treat SHAP percentages as indicative, present collinear thermal signals as a group, and have a vibration analyst sanity-check before publishing explanations.</div>`:''}
+    </div></section>`;
+  }
+
+  /* ── Calibration ── */
+  const cal = rep.calibration;
+  if (cal) {
+    const relRows = (cal.reliability_diagram||[]).map(p=>{
+      const gap = Math.abs(p.predicted - p.observed);
+      const col = gap<0.1?'var(--green)':gap<0.25?'var(--amber)':'var(--red)';
+      return `<div class="bar-row" style="margin-bottom:8px"><div class="bar-name" style="width:80px"><strong>${(p.bin*100).toFixed(0)}%</strong><span>n=${p.n}</span></div>
+        <div class="bar-track" style="height:22px;background:var(--g100)">
+          <div class="bar-base" style="left:${p.predicted*100}%;background:var(--g500)"></div>
+          <div class="bar-fill" style="width:${p.observed*100}%;background:${col}">${(p.observed*100).toFixed(0)}%</div>
+        </div></div>`;
+    }).join('');
+    const wellCal = cal.ece < 0.1;
+    html += `<section><div class="card">
+      <div class="sec-label">Test 7 · Probability Calibration (the hidden requirement)</div>
+      <h2 class="sec">When the model says 80%, do 80% actually fail?</h2>
+      <div class="sec-sub">Every Expected-Loss € figure multiplies this probability. If it is mis-stated, the money ranking inherits the error. Grey line = predicted, bar = observed frequency.</div>
+      <div class="row" style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="metric" style="min-width:120px"><div class="lbl" style="color:var(--g500)">Brier score</div><div class="val ${cal.brier_score<0.15?'good':'bad'}" style="font-size:26px;color:${cal.brier_score<0.15?'var(--teal)':'var(--red)'}">${cal.brier_score}</div><div class="sub" style="color:var(--g400)">lower = better</div></div>
+        <div class="metric" style="min-width:120px"><div class="lbl" style="color:var(--g500)">ECE (calibration error)</div><div class="val ${wellCal?'good':'bad'}" style="font-size:26px;color:${wellCal?'var(--teal)':'var(--red)'}">${cal.ece}</div><div class="sub" style="color:var(--g400)">&lt;0.10 = calibrated</div></div>
+        <div class="metric" style="min-width:200px"><div class="lbl" style="color:var(--g500)">After isotonic fix</div><div class="val" style="font-size:22px;color:var(--navy)">Brier ${cal.isotonic.brier_score} · ECE ${cal.isotonic.ece}</div><div class="sub" style="color:var(--g400)">isotonic regression</div></div>
+      </div>
+      <div class="sec-label" style="margin-bottom:10px">Reliability diagram</div>
+      ${relRows}
+      <div class="interp" style="margin-top:10px">${cal.verdict}</div>
+      ${!wellCal?`<div class="warnbox" style="margin-top:12px"><strong>Action:</strong> apply isotonic calibration to model probabilities before they feed the Expected-Loss risk score, so €-rankings rest on probabilities that mean what they say.</div>`:''}
+    </div></section>`;
+  }
+
+  /* ── Risk methodology (defensibility) ── */
+  html += `<section><div class="card">
+    <div class="sec-label">Risk Methodology · Defensible by design</div>
+    <h2 class="sec">Why the ranking is Expected Loss (€), not raw RPN</h2>
+    <div class="sec-sub">A plain RPN (Severity×Occurrence×Detection) is challenged on sight by reliability auditors. WindSense ranks by money and shows urgency separately.</div>
+    <div class="interp" style="background:var(--navy);color:#fff;font-family:var(--fm);font-size:13px">
+      Expected Economic Loss (€) = P(failure within RUL window) × Consequence(€)<br/>
+      &nbsp;&nbsp;Consequence(€) = parts + labour + crane/vessel + lost revenue<br/>
+      &nbsp;&nbsp;lost revenue = capacity(MW) × power price(€/MWh) × downtime hours
+    </div>
+    <div class="twocol" style="margin-top:14px">
+      <div><div class="check-row"><div class="ck ok">✓</div>Ranking metric is € (auditable line-by-line) — RUL shown as a separate urgency column</div>
+        <div class="check-row"><div class="ck ok">✓</div>Action Priority (AIAG-VDA High/Med/Low) replaces raw RPN multiplication</div></div>
+      <div><div class="check-row"><div class="ck ok">✓</div>Failure naming aligned to ISO 14224 / IEC 61400 taxonomy (transfers across fleets)</div>
+        <div class="check-row"><div class="ck ok">✓</div>Written severity criteria — "S9 = gearbox replacement, 14 days, crane, ~€370k"</div></div>
+    </div>
+    <div class="interp" style="margin-top:10px">Every per-turbine € figure and its parts/labour/crane/lost-revenue breakdown is shown on the Risk Queue. The fleet "Financial Exposure" KPI is now the <strong>sum of these derived EEL values</strong> — not an invented number.</div>
+  </div></section>`;
+
+  const permPass = perm.passed;
+  html += `<section><div class="twocol">
+    <div class="card"><div class="sec-label">Test 4 · Label-Permutation</div>
+      <h2 class="sec">The cheapest cheating test</h2>
+      <div class="sec-sub">Shuffle labels, retrain. A real model must collapse to chance.</div>
+      <table><tr><td>Real labels — PR-AUC</td><td class="mono" style="text-align:right;font-weight:700">${f3(perm.real_label_pr_auc)}</td></tr>
+        <tr><td>Shuffled labels — PR-AUC</td><td class="mono" style="text-align:right">${f3(perm.shuffled_label_pr_auc)}</td></tr>
+        <tr><td>Base rate (chance)</td><td class="mono" style="text-align:right">${f3(perm.base_rate)}</td></tr></table>
+      <div style="margin-top:14px"><span class="pill ${permPass?'pass':'fail'}">${permPass?'✓ PASS':'✗ FAIL'}</span></div>
+      <div class="interp" style="margin-top:12px">${perm.verdict}</div></div>
+    <div class="card"><div class="sec-label">Test 5 · Post-Failure Embargo</div>
+      <h2 class="sec">Is it predicting, or just reacting?</h2>
+      <div class="sec-sub">Delete the last ${emb.embargo_days} days before each failure and retest.</div>
+      <table><tr><td>With late window — PR-AUC</td><td class="mono" style="text-align:right">${f3(emb.with_late_window_pr_auc)}</td></tr>
+        <tr><td>Embargoed (early signals only)</td><td class="mono" style="text-align:right;font-weight:700">${f3(emb.embargoed_pr_auc)}</td></tr>
+        <tr><td>Rows removed</td><td class="mono" style="text-align:right">${emb.rows_removed.toLocaleString()}</td></tr></table>
+      <div class="interp" style="margin-top:12px">${emb.interpretation}</div></div></div></section>`;
+
+  const c = audit.checks;
+  html += `<section><div class="card">
+    <div class="sec-label">Test 2 · Feature Leakage Audit</div>
+    <h2 class="sec">Is the model reading the OEM's own alarms?</h2>
+    <div class="sec-sub">${audit.n_features} features in the model. The most common way wind PdM demos cheat is by including status/alarm/derived-health channels.</div>
+    <div class="check-row"><div class="ck ${c.alarm_status_codes_removed?'ok':'no'}">${c.alarm_status_codes_removed?'✓':'✗'}</div>Alarm / status codes removed from features</div>
+    <div class="check-row"><div class="ck ${c.maintenance_action_flags_removed?'ok':'no'}">${c.maintenance_action_flags_removed?'✓':'✗'}</div>Maintenance / human-intervention flags removed</div>
+    <div class="check-row"><div class="ck ok">✓</div>No OEM-derived health/warning bits (CARE channels are raw physical signals)</div>
+    <div class="check-row"><div class="ck ${audit.status_type_id_excluded?'ok':'no'}">${audit.status_type_id_excluded?'✓':'✗'}</div>Operating-mode code <span class="mono">status_type_id</span> excluded</div>
+    <div style="margin-top:14px"><span class="pill ${audit.status_or_alarm_features_in_model.length?'fail':'pass'}">${audit.verdict.startsWith('PASS')?'✓ PASS':'✗ FAIL'}</span></div></div></section>`;
+
+  html += `<section><div class="card">
+    <div class="sec-label">Test 1 · Data Provenance & Coverage</div>
+    <h2 class="sec">What the labels and data actually are</h2>
+    <div class="warnbox"><strong>Sampling rate:</strong> ${prov.sampling_rate_human}. ${prov.sampling_rate_warning}</div>
+    <div class="warnbox"><strong>Base rate:</strong> ${(prov.fleet_row_positive_rate*100).toFixed(1)}% positive. ${prov.fleet_positive_rate_warning}</div>
+    <div class="warnbox"><strong>Labels:</strong> ${prov.labeling_provenance}</div>
+    <table style="margin-top:8px"><thead><tr><th>Turbine</th><th>Channels</th><th>Rows</th><th>Date range</th><th>Real failures</th><th>Pos. rate</th><th>Failure modes</th></tr></thead><tbody>
+      ${prov.turbines.map(t=>`<tr><td class="mono">asset ${t.asset_id}</td><td class="mono">${t.scada_channels}</td><td class="mono">${t.rows.toLocaleString()}</td>
+        <td class="mono" style="font-size:11px">${t.date_range[0].slice(0,10)} → ${t.date_range[1].slice(0,10)}</td>
+        <td class="mono" style="font-weight:700;color:${t.n_real_failures<3?'var(--amber)':'var(--navy)'}">${t.n_real_failures}</td>
+        <td class="mono">${(t.row_positive_rate*100).toFixed(0)}%</td><td style="font-size:11px">${Object.keys(t.failure_modes).join(', ')||'—'}</td></tr>`).join('')}
+    </tbody></table></div></section>`;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+async function load(){
+  try{
+    const res = await apiGet('/validation/report');
+    if(res.status === 'not_run'){
+      document.getElementById('content').innerHTML =
+        `<div class="card"><h2 class="sec">No validation report yet</h2><div class="sec-sub">Click "Re-run suite" above, or run <span class="mono">python -m scripts.run_validation</span> in the backend.</div></div>`;
+      return;
+    }
+    render(res.report);
+  }catch(e){
+    document.getElementById('content').innerHTML =
+      `<div class="card"><h2 class="sec">Backend offline</h2><div class="sec-sub">Could not reach the API at ${API_ROOT}. Start the backend: <span class="mono">uvicorn app.main:app --reload</span></div></div>`;
+  }
+}
+
+async function runValidation(){
+  const btn=document.getElementById('run-btn'), st=document.getElementById('run-status');
+  btn.disabled=true; st.textContent="Running (~1–2 min)…";
+  try{
+    await apiPost('/validation/run');
+    let tries=0;
+    const timer=setInterval(async()=>{
+      tries++;
+      try{ const res=await apiGet('/validation/report'); if(res.status==='ok'){ clearInterval(timer); btn.disabled=false; st.textContent="✓ Done"; render(res.report); } }catch(e){}
+      if(tries>60){ clearInterval(timer); btn.disabled=false; st.textContent="Timed out — reload."; }
+    },3000);
+  }catch(e){ btn.disabled=false; st.textContent="Failed: "+e.message; }
+}
+
+setUser();
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Onboarding & Data Quality — WindSense AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    :root{--navy:#09192A;--teal:#0A8C7C;--teal-b:#0DB39E;--green:#16A34A;--green-l:#22C55E;
+      --green-dim:rgba(22,163,74,.1);--amber:#D97706;--amber-dim:rgba(217,119,6,.1);--red:#DC2626;
+      --red-dim:rgba(220,38,38,.1);--g50:#F8FAFC;--g100:#F1F5F9;--g200:#E2E8F0;--g400:#94A3B8;
+      --g500:#64748B;--g700:#334155;--white:#FFF;--f:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;--sidebar:240px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:var(--f);background:var(--g50);color:var(--g700);display:flex;-webkit-font-smoothing:antialiased;line-height:1.55}
+    a{color:var(--teal);text-decoration:none}
+    .sidebar{width:var(--sidebar);flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
+    .sb-logo{display:flex;align-items:center;gap:9px;padding:20px 20px 16px;font-size:16px;font-weight:700;color:#fff;border-bottom:1px solid rgba(255,255,255,.06)}
+    .sb-logo span{color:var(--teal-b)}
+    .sb-section-label{font-family:var(--fm);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.25);padding:20px 20px 6px}
+    .sb-nav{list-style:none;padding:0 10px}.sb-nav li{margin-bottom:2px}
+    .sb-nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:6px;font-size:13px;font-weight:500;color:rgba(255,255,255,.55);transition:.15s}
+    .sb-nav a:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+    .sb-nav a.active{background:rgba(13,179,158,.12);color:var(--teal-b);font-weight:600}
+    .main{flex:1;height:100vh;overflow-y:auto}
+    .topbar{background:#fff;border-bottom:1px solid var(--g200);padding:0 28px;min-height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+    .topbar h1{font-size:16px;font-weight:700;color:var(--navy)}.topbar .crumb{font-size:12px;color:var(--g400);font-family:var(--fm)}
+    .vcontent{padding:24px 28px;max-width:1080px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;background:var(--teal);color:#fff;transition:.15s}
+    .btn:hover{background:var(--teal-b)} .btn:disabled{opacity:.6}
+    section{margin-bottom:24px}
+    .card{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+    .sec-label{font-family:var(--fm);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--g400);margin-bottom:6px}
+    h2.sec{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:4px}
+    .sec-sub{font-size:13px;color:var(--g500);margin-bottom:16px}
+    .hero{background:var(--navy);color:#fff;border:none}
+    .hero .row{display:flex;gap:28px;flex-wrap:wrap;margin-top:12px}
+    .metric .lbl{font-size:12px;color:rgba(255,255,255,.5)} .metric .val{font-family:var(--fm);font-size:26px;font-weight:700;color:var(--teal-b)}
+    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:var(--fm)}
+    .pill.pass{background:var(--green-dim);color:var(--green)} .pill.warn{background:var(--amber-dim);color:var(--amber)} .pill.fail{background:var(--red-dim);color:var(--red)}
+    table{width:100%;border-collapse:collapse;font-size:12.5px}
+    th{text-align:left;padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--g400);background:var(--g50);border-bottom:1px solid var(--g200)}
+    td{padding:8px 10px;border-bottom:1px solid var(--g100)} td.mono{font-family:var(--fm)} tr:last-child td{border-bottom:none}
+    .arrow{color:var(--teal);font-family:var(--fm)}
+    .file-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;margin-bottom:8px;cursor:pointer;transition:.15s}
+    .file-row:hover{border-color:var(--teal);background:var(--g50)} .file-row.active{border-color:var(--teal);background:rgba(13,179,158,.06)}
+    .gauge{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+    .gauge .num{font-family:var(--fm);font-size:40px;font-weight:700}
+    .flagchip{display:inline-block;font-family:var(--fm);font-size:11px;padding:3px 9px;border-radius:5px;margin:2px 4px 2px 0}
+    .loading{padding:40px;text-align:center;color:var(--g400);font-family:var(--fm)}
+    .warnbox{background:var(--amber-dim);border:1px solid rgba(217,119,6,.25);border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;line-height:1.6;margin-top:10px}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <a href="dashboard.html" class="sb-logo">
+    <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="3.5" fill="#0DB39E"/><path d="M16 12.5C14 8 10 4 12 2s5 4 4 10.5Z" fill="#0DB39E" opacity=".9"/><path d="M16 12.5C20.3 10.4 25.6 10 26.8 12.5S22 16.5 16 12.5Z" fill="#0DB39E" opacity=".65"/><path d="M16 12.5C11.7 10.4 6.4 10 5.2 12.5S10 16.5 16 12.5Z" fill="#0DB39E" opacity=".45"/><circle cx="16" cy="16" r="2" fill="#09192A"/></svg>
+    Wind<span>Sense</span>&nbsp;AI
+  </a>
+  <div class="sb-section-label">Monitoring</div>
+  <ul class="sb-nav">
+    <li><a href="dashboard.html?screen=fleet">Fleet Command</a></li>
+    <li><a href="dashboard.html?screen=predictions">ML Predictions</a></li>
+    <li><a href="dashboard.html?screen=riskqueue">Risk Queue</a></li>
+    <li><a href="dashboard.html?screen=scada">SCADA Trends</a></li>
+  </ul>
+  <div class="sb-section-label">Reliability</div>
+  <ul class="sb-nav">
+    <li><a href="dashboard.html?screen=certs">Asset Health Certs</a></li>
+    <li><a href="dashboard.html?screen=workorders">Work Orders</a></li>
+    <li><a href="validation.html">ML Validation</a></li>
+  </ul>
+  <div class="sb-section-label">Operations</div>
+  <ul class="sb-nav">
+    <li><a href="onboarding.html" class="active">Onboarding &amp; Data Quality</a></li>
+    <li><a href="dashboard.html?screen=settings">Settings</a></li>
+  </ul>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div><h1>Onboarding &amp; Data Quality</h1><div class="crumb" id="crumb">Config-driven · no per-site code</div></div>
+    <button class="btn" id="run-btn" onclick="runValidate()">Validate &amp; run DQ report</button>
+  </div>
+  <div class="vcontent">
+    <section><div class="card hero">
+      <div class="sec-label" style="color:rgba(255,255,255,.5)">Scalable Onboarding</div>
+      <h2 class="sec" style="color:#fff">A new site is one mapping file — not custom engineering</h2>
+      <div class="sec-sub" style="color:rgba(255,255,255,.6)">Source SCADA tags map to a Canonical Wind Data Model via a YAML/JSON config. Units auto-convert; unmapped and out-of-range channels are flagged; a data-quality report runs on ingestion. No per-site Python.</div>
+      <div class="row">
+        <div class="metric"><div class="lbl">Onboarding code per site</div><div class="val">0 lines</div></div>
+        <div class="metric"><div class="lbl">Config artifact</div><div class="val" style="font-size:20px">1 mapping file</div></div>
+        <div class="metric"><div class="lbl">Target onboarding time</div><div class="val" style="font-size:20px">&lt; 4 weeks</div></div>
+      </div>
+    </div></section>
+
+    <section><div class="card">
+      <div class="sec-label">Site Mapping Files</div>
+      <h2 class="sec">Registered sites</h2>
+      <div class="sec-sub">Each file is a complete onboarding spec. Click to view its tag mapping.</div>
+      <div id="files"><div class="loading">Loading…</div></div>
+    </div></section>
+
+    <section><div class="card">
+      <div class="sec-label">Tag Mapping</div>
+      <h2 class="sec" id="map-title">Source tag → Canonical field</h2>
+      <div class="sec-sub" id="map-sub">The OEM-agnostic translation layer.</div>
+      <div id="mapping"><div class="loading">Select a site above…</div></div>
+    </div></section>
+
+    <section id="report-section"></section>
+  </div>
+</main>
+
+<script>
+const API_ROOT = window.WS_API_ROOT || "http://localhost:8000";
+const API = API_ROOT + "/api";
+let sb=null; try{ if(SUPABASE_URL!=="YOUR_SUPABASE_URL_HERE") sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
+let CURRENT="windfarm_a.yaml";
+async function authHeader(){const h={};try{if(sb){const{data}=await sb.auth.getSession();if(data&&data.session){h.Authorization="Bearer "+data.session.access_token;if(data.session.user?.email)h["X-WS-User-Email"]=data.session.user.email;}}}catch(e){}return h;}
+async function apiGet(p){const r=await fetch(API+p,{headers:await authHeader()});if(!r.ok)throw new Error(r.status);return r.json();}
+async function apiPost(p){const r=await fetch(API+p,{method:"POST",headers:await authHeader()});if(!r.ok)throw new Error(r.status);return r.json();}
+
+async function loadFiles(){
+  try{
+    const files=await apiGet('/onboarding/mappings');
+    document.getElementById('files').innerHTML=files.map(f=>`
+      <div class="file-row ${f.file===CURRENT?'active':''}" onclick="selectFile('${f.file}')">
+        <div><strong>${f.site||f.file}</strong> <span style="color:var(--g400);font-size:12px">${f.country||''}</span><br/>
+          <span style="font-family:var(--fm);font-size:11px;color:var(--g400)">${f.file} · ${f.n_mappings} tags · ${f.sample_rate_seconds}s · ${f.timezone||''}</span></div>
+        <span class="arrow">view →</span>
+      </div>`).join('');
+    selectFile(CURRENT, false);
+  }catch(e){ document.getElementById('files').innerHTML=`<div class="warnbox">Backend offline at ${API_ROOT}. Start it: <span style="font-family:var(--fm)">uvicorn app.main:app --reload</span></div>`; }
+}
+async function selectFile(name, reload=true){
+  CURRENT=name;
+  document.querySelectorAll('.file-row').forEach(r=>r.classList.toggle('active', r.textContent.includes(name)));
+  try{
+    const m=await apiGet('/onboarding/mapping/'+name);
+    document.getElementById('map-title').textContent=`Source tag → Canonical field · ${m.site}`;
+    document.getElementById('map-sub').textContent=`timestamp: ${m.timestamp_column} · asset id: ${m.asset_id_column} · ${m.sample_rate_seconds}s · ${m.timezone}`;
+    document.getElementById('mapping').innerHTML=`<table><thead><tr><th>Source tag (vendor)</th><th></th><th>Canonical field</th><th>Unit</th></tr></thead><tbody>
+      ${m.mappings.map(x=>`<tr><td class="mono">${x.source}</td><td class="arrow">→</td><td class="mono">${x.canonical}</td><td class="mono">${x.unit||''}</td></tr>`).join('')}
+    </tbody></table>`;
+  }catch(e){ document.getElementById('mapping').innerHTML=`<div class="warnbox">Could not load mapping.</div>`; }
+}
+async function runValidate(){
+  const btn=document.getElementById('run-btn'); btn.disabled=true; const orig=btn.textContent; btn.textContent="Running…";
+  const sec=document.getElementById('report-section');
+  sec.innerHTML='<div class="card"><div class="loading">Sampling data + running validation & DQ report…</div></div>';
+  try{
+    const r=await apiPost(`/onboarding/validate?profile=${CURRENT}&rows=40000`);
+    renderReport(r);
+  }catch(e){ sec.innerHTML=`<div class="card"><div class="warnbox">Validation failed: ${e.message} (this profile may have no matching data CSV).</div></div>`; }
+  finally{ btn.disabled=false; btn.textContent=orig; }
+}
+function renderReport(r){
+  const v=r.validation, dq=r.data_quality;
+  const col=dq.readiness_score>=80?'var(--green)':dq.readiness_score>=55?'var(--amber)':'var(--red)';
+  const flag=(arr,c)=>arr.length?arr.map(x=>`<span class="flagchip" style="background:${c}">${x}</span>`).join(''):'<span style="color:var(--g400);font-size:12px">none</span>';
+  const t=dq.timestamps;
+  document.getElementById('report-section').innerHTML=`
+    <div class="card">
+      <div class="sec-label">Mapping Validation</div>
+      <h2 class="sec">${r.site} · ${r.rows_sampled.toLocaleString()} rows sampled</h2>
+      <div style="margin:8px 0"><span class="pill ${v.passed?'pass':'fail'}">${v.passed?'✓ PASS':'✗ ISSUES'}</span> &nbsp;${v.verdict}</div>
+      <table><tbody>
+        <tr><td>Mapped channels</td><td class="mono">${v.mapped_channels}</td></tr>
+        <tr><td>Unmapped source channels (informational)</td><td class="mono">${v.unmapped_source_channels.length} not used</td></tr>
+        <tr><td>Missing required fields</td><td class="mono">${v.missing_required_fields.join(', ')||'none'}</td></tr>
+        <tr><td>Unknown canonical targets</td><td class="mono">${v.unknown_canonical_targets.join(', ')||'none'}</td></tr>
+        <tr><td>Unconvertible units</td><td class="mono">${v.unconvertible_units.join(', ')||'none'}</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="sec-label">Data-Quality Report (generated on ingestion)</div>
+      <h2 class="sec">Readiness</h2>
+      <div class="gauge"><div class="num" style="color:${col}">${dq.readiness_score}</div>
+        <div><div style="font-weight:700;color:${col}">${dq.verdict}</div>
+        <div style="font-size:12px;color:var(--g500)">/100 readiness</div></div></div>
+      <table><tbody>
+        <tr><td>Sample rate (observed / declared)</td><td class="mono">${t.observed_median_rate_seconds}s / ${t.declared_rate_seconds}s ${t.rate_mismatch?'⚠ mismatch':'✓'}</td></tr>
+        <tr><td>Timestamp gaps (&gt;1.5× rate)</td><td class="mono">${t.gaps_over_1_5x_rate} (largest ${t.largest_gap_minutes} min)</td></tr>
+        <tr><td>Duplicate / invalid timestamps</td><td class="mono">${t.duplicates} dupes · ${t.invalid} invalid</td></tr>
+        <tr><td>Unit conversions applied</td><td class="mono">${dq.unit_conversions_applied.join(', ')||'none'}</td></tr>
+      </tbody></table>
+      <div style="margin-top:10px;font-size:12px"><strong>Frozen sensors:</strong> ${flag(dq.flags.frozen_sensors,'var(--red-dim)')}</div>
+      <div style="margin-top:6px;font-size:12px"><strong>Out-of-range:</strong> ${flag(dq.flags.out_of_range_fields,'var(--amber-dim)')}</div>
+      <div style="margin-top:6px;font-size:12px"><strong>High missingness:</strong> ${flag(dq.flags.high_missingness_fields,'var(--amber-dim)')}</div>
+      <div class="warnbox">${dq.timezone_note}</div>
+      <table style="margin-top:14px"><thead><tr><th>Canonical field</th><th>Unit</th><th>Missing %</th><th>Out-of-range %</th><th>Frozen</th></tr></thead><tbody>
+        ${dq.fields.map(f=>`<tr><td class="mono">${f.field}</td><td class="mono">${f.unit||''}</td><td class="mono">${f.missing_pct}%</td><td class="mono">${f.out_of_range_pct==null?'—':f.out_of_range_pct+'%'}</td><td>${f.frozen?'<span style="color:var(--red)">⚠ yes</span>':'no'}</td></tr>`).join('')}
+      </tbody></table>
+    </div>`;
+}
+loadFiles();
+</script>
+</body>
+</html>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sign In — WindSense AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    :root{
+      --navy:#09192A; --navy-mid:#0F2337; --steel:#1A3A5C;
+      --teal:#0A8C7C; --teal-b:#0DB39E; --teal-dim:rgba(13,179,158,.12);
+      --green:#16A34A; --green-l:#22C55E;
+      --red:#DC2626; --red-dim:rgba(220,38,38,.1);
+      --g50:#F8FAFC; --g100:#F1F5F9; --g200:#E2E8F0;
+      --g300:#CBD5E1; --g400:#94A3B8; --g500:#64748B;
+      --g700:#334155; --white:#FFFFFF;
+      --f-main:'Inter',sans-serif; --f-mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:var(--f-main); color:var(--g700);
+      background:var(--navy);
+      display:flex; min-height:100vh;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* ── Left panel — brand ───────────────────────────────────────── */
+    .left-panel{
+      flex:1; display:flex; flex-direction:column;
+      justify-content:space-between; padding:48px;
+      position:relative; overflow:hidden;
+      background:linear-gradient(160deg,#06111D 0%,#0C2340 50%,#0F3358 100%);
+    }
+    .left-grid{
+      position:absolute;inset:0;
+      background-image:
+        linear-gradient(rgba(13,179,158,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(13,179,158,.04) 1px,transparent 1px);
+      background-size:64px 64px; pointer-events:none;
+    }
+    .left-glow{
+      position:absolute;bottom:-120px;left:-80px;
+      width:500px;height:500px;border-radius:50%;
+      background:radial-gradient(circle,rgba(13,179,158,.1) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .left-content{position:relative;z-index:1;}
+    .brand{
+      display:flex;align-items:center;gap:10px;
+      font-size:20px;font-weight:700;color:var(--white);
+      text-decoration:none;margin-bottom:64px;
+    }
+    .brand span{color:var(--teal-b)}
+    .left-heading{
+      font-size:clamp(28px,3vw,42px);font-weight:800;
+      color:var(--white);line-height:1.15;letter-spacing:-.02em;
+      margin-bottom:20px;
+    }
+    .left-heading em{
+      font-style:normal;
+      background:linear-gradient(135deg,var(--teal-b),#5ECFCA);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .left-sub{font-size:15px;color:rgba(255,255,255,.55);line-height:1.7;max-width:380px}
+
+    /* Turbine visual */
+    .turbine-wrap{
+      position:relative;margin-top:52px;
+      display:flex;justify-content:center;
+    }
+    @keyframes spin-blade{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    .blade-group{
+      transform-origin:50% 50%;
+      animation:spin-blade 9s linear infinite;
+    }
+
+    /* Metric cards */
+    .metrics{display:flex;flex-direction:column;gap:12px;position:relative;z-index:1}
+    .metric-row{
+      display:flex;gap:12px;
+    }
+    .metric-chip{
+      flex:1;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.09);
+      border-radius:8px;padding:14px 16px;
+    }
+    .metric-chip .val{
+      font-family:var(--f-mono);font-size:20px;
+      font-weight:700;color:var(--white);line-height:1;
+    }
+    .metric-chip .lbl{
+      font-size:11px;color:rgba(255,255,255,.4);
+      margin-top:4px;
+    }
+
+    /* ── Right panel — form ───────────────────────────────────────── */
+    .right-panel{
+      width:480px;flex-shrink:0;
+      background:var(--white);
+      display:flex;flex-direction:column;
+      justify-content:center;padding:56px 48px;
+    }
+
+    /* Tabs */
+    .tab-row{
+      display:flex;border-bottom:2px solid var(--g200);
+      margin-bottom:32px;
+    }
+    .tab{
+      flex:1;padding:12px;text-align:center;
+      font-size:14px;font-weight:600;color:var(--g400);
+      cursor:pointer;border-bottom:2px solid transparent;
+      margin-bottom:-2px;transition:.2s;
+    }
+    .tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+    /* Form */
+    .form-title{
+      font-size:24px;font-weight:800;color:var(--navy);
+      margin-bottom:6px;letter-spacing:-.02em;
+    }
+    .form-sub{font-size:14px;color:var(--g400);margin-bottom:28px}
+
+    .form-group{margin-bottom:18px}
+    .form-group label{
+      display:block;font-size:13px;font-weight:600;
+      color:var(--g700);margin-bottom:6px;
+    }
+    .form-group input{
+      width:100%;padding:12px 14px;
+      border:1.5px solid var(--g200);border-radius:8px;
+      font-size:15px;font-family:var(--f-main);
+      color:var(--navy);background:var(--white);
+      outline:none;transition:.2s;
+    }
+    .form-group input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,140,124,.1)}
+    .form-group input.error{border-color:var(--red);box-shadow:0 0 0 3px var(--red-dim)}
+    .form-group input::placeholder{color:var(--g300)}
+
+    .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+    .forgot{
+      font-size:13px;color:var(--teal);font-weight:500;
+      float:right;margin-top:-4px;cursor:pointer;
+      background:none;border:none;transition:.2s;
+    }
+    .forgot:hover{color:var(--teal-b)}
+
+    .btn-submit{
+      width:100%;padding:14px;border-radius:8px;
+      font-size:15px;font-weight:700;
+      background:var(--teal);color:var(--white);
+      border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:.2s;margin-top:4px;
+    }
+    .btn-submit:hover{background:var(--teal-b);transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,179,158,.3)}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+    .btn-submit .spinner{
+      width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+      border-top-color:var(--white);border-radius:50%;
+      animation:spin .7s linear infinite;display:none;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .btn-submit.loading .spinner{display:block}
+    .btn-submit.loading .btn-text{display:none}
+
+    .divider{
+      display:flex;align-items:center;gap:12px;
+      margin:20px 0;font-size:12px;color:var(--g300);
+    }
+    .divider::before,.divider::after{
+      content:'';flex:1;height:1px;background:var(--g200);
+    }
+
+    /* Alert messages */
+    .alert{
+      padding:12px 16px;border-radius:8px;
+      font-size:13px;font-weight:500;margin-bottom:18px;
+      display:none;align-items:flex-start;gap:8px;
+    }
+    .alert.show{display:flex}
+    .alert.error{background:var(--red-dim);border:1px solid rgba(220,38,38,.2);color:var(--red)}
+    .alert.success{background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.2);color:var(--green)}
+    .alert.info{background:var(--teal-dim);border:1px solid rgba(13,179,158,.2);color:var(--teal)}
+
+    /* Password strength */
+    .pwd-strength{margin-top:6px;display:none}
+    .pwd-strength-bar{
+      height:3px;border-radius:2px;background:var(--g200);
+      overflow:hidden;margin-bottom:4px;
+    }
+    .pwd-strength-fill{height:100%;border-radius:2px;transition:.3s;width:0}
+    .pwd-strength-label{font-size:11px;color:var(--g400)}
+
+    /* Password toggle */
+    .pwd-wrap{position:relative}
+    .pwd-toggle{
+      position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;
+      color:var(--g400);padding:2px;
+    }
+
+    .terms{
+      margin-top:16px;font-size:12px;color:var(--g400);
+      text-align:center;line-height:1.6;
+    }
+    .terms a{color:var(--teal);font-weight:500}
+
+    .reset-back{
+      font-size:13px;color:var(--teal);font-weight:500;
+      cursor:pointer;background:none;border:none;
+      display:inline-flex;align-items:center;gap:5px;
+      margin-bottom:20px;
+    }
+    .reset-back:hover{color:var(--teal-b)}
+
+    /* Success state */
+    .success-state{display:none;text-align:center;padding:20px 0}
+    .success-icon{
+      width:64px;height:64px;border-radius:50%;
+      background:rgba(22,163,74,.1);border:2px solid rgba(22,163,74,.2);
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 20px;
+    }
+
+    /* Footer */
+    .form-footer{
+      margin-top:28px;padding-top:20px;
+      border-top:1px solid var(--g100);
+      font-size:12px;color:var(--g400);
+      display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+    }
+    .form-footer a{color:var(--g500);transition:.2s}
+    .form-footer a:hover{color:var(--navy)}
+
+    /* Panel switching */
+    .panel{display:none}
+    .panel.active{display:block}
+
+    @media(max-width:860px){
+      .left-panel{display:none}
+      .right-panel{width:100%;padding:40px 28px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Left Brand Panel ──────────────────────────────────────────── -->
+<div class="left-panel">
+  <div class="left-grid"></div>
+  <div class="left-glow"></div>
+
+  <div class="left-content">
+    <a href="index.html" class="brand">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="3.5" fill="#0DB39E"/>
+        <path d="M16 12.5C14 8 10 4 12 2s5 4 4 10.5Z" fill="#0DB39E" opacity=".9"/>
+        <path d="M16 12.5C20.3 10.4 25.6 10 26.8 12.5S22 16.5 16 12.5Z" fill="#0DB39E" opacity=".65"/>
+        <path d="M16 12.5C11.7 10.4 6.4 10 5.2 12.5S10 16.5 16 12.5Z" fill="#0DB39E" opacity=".45"/>
+        <circle cx="16" cy="16" r="2" fill="#09192A"/>
+      </svg>
+      Wind<span>Sense</span>&nbsp;AI
+    </a>
+
+    <div>
+      <h2 class="left-heading">
+        Reliability Intelligence<br/>for <em>Wind Operators</em>
+      </h2>
+      <p class="left-sub">
+        ML-based fault detection · FMECA risk ranking · Remaining Useful Life ·
+        Mixed-fleet unified monitoring — independent of your OEM.
+      </p>
+
+      <!-- Turbine SVG -->
+      <div class="turbine-wrap">
+        <svg width="280" height="220" viewBox="0 0 280 220" fill="none">
+          <!-- Tower -->
+          <polygon points="130,220 135,80 145,80 150,220" fill="rgba(26,58,92,.6)"/>
+          <!-- Nacelle -->
+          <rect x="124" y="70" width="32" height="14" rx="3" fill="rgba(26,58,92,.8)"/>
+          <!-- Rotating blades -->
+          <g class="blade-group" style="transform-origin:140px 77px">
+            <path d="M140 77 C134 54 126 32 131 14 C136-4 144 14 140 77Z" fill="rgba(13,140,124,.7)"/>
+            <path d="M140 77 C134 54 126 32 131 14 C136-4 144 14 140 77Z" fill="rgba(13,140,124,.7)" transform="rotate(120,140,77)"/>
+            <path d="M140 77 C134 54 126 32 131 14 C136-4 144 14 140 77Z" fill="rgba(13,140,124,.7)" transform="rotate(240,140,77)"/>
+          </g>
+          <!-- Hub -->
+          <circle cx="140" cy="77" r="8" fill="rgba(30,70,110,.9)"/>
+          <circle cx="140" cy="77" r="4" fill="#0DB39E" opacity=".6"/>
+          <!-- Ground -->
+          <rect x="0" y="215" width="280" height="5" fill="rgba(13,179,158,.1)"/>
+          <!-- Pulse ring -->
+          <circle cx="140" cy="77" r="20" fill="none" stroke="rgba(13,179,158,.2)" stroke-width="1">
+            <animate attributeName="r" values="14;28;14" dur="2.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".5;0;.5" dur="2.5s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Data lines -->
+          <line x1="148" y1="77" x2="220" y2="60" stroke="rgba(13,179,158,.2)" stroke-width="1" stroke-dasharray="3 4"/>
+          <rect x="220" y="50" width="54" height="20" rx="3" fill="rgba(9,25,42,.7)" stroke="rgba(13,179,158,.3)" stroke-width="1"/>
+          <text x="247" y="64" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#0DB39E" font-weight="500">RUL: 38d</text>
+          <line x1="132" y1="77" x2="50" y2="55" stroke="rgba(13,179,158,.2)" stroke-width="1" stroke-dasharray="3 4"/>
+          <rect x="5" y="44" width="58" height="20" rx="3" fill="rgba(9,25,42,.7)" stroke="rgba(13,179,158,.3)" stroke-width="1"/>
+          <text x="34" y="58" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#22C55E" font-weight="500">Score: 87</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metric chips -->
+  <div class="metrics">
+    <div class="metric-row">
+      <div class="metric-chip">
+        <div class="val">18–45</div>
+        <div class="lbl">Days early fault warning</div>
+      </div>
+      <div class="metric-chip">
+        <div class="val">€400K</div>
+        <div class="lbl">Avg. gearbox failure cost</div>
+      </div>
+    </div>
+    <div class="metric-row">
+      <div class="metric-chip">
+        <div class="val">ISO 13381</div>
+        <div class="lbl">Condition monitoring aligned</div>
+      </div>
+      <div class="metric-chip">
+        <div class="val">OEM-free</div>
+        <div class="lbl">Full fleet independence</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Right Form Panel ──────────────────────────────────────────── -->
+<div class="right-panel">
+
+  <!-- ── SIGN IN / SIGN UP TABS ───────────────────────────────── -->
+  <div id="auth-section">
+    <div class="tab-row">
+      <div class="tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</div>
+      <div class="tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+    </div>
+
+    <!-- Global alert -->
+    <div class="alert" id="global-alert"></div>
+
+    <!-- ─ SIGN IN PANEL ─ -->
+    <div class="panel active" id="panel-signin">
+      <h1 class="form-title">Welcome back</h1>
+      <p class="form-sub">Sign in to your WindSense AI dashboard</p>
+
+      <form id="signin-form" onsubmit="handleSignIn(event)">
+        <div class="form-group">
+          <label for="signin-email">Email address</label>
+          <input type="email" id="signin-email" placeholder="you@company.com" autocomplete="email" required/>
+        </div>
+        <div class="form-group">
+          <label for="signin-password">
+            Password
+            <button type="button" class="forgot" onclick="showReset()">Forgot password?</button>
+          </label>
+          <div class="pwd-wrap">
+            <input type="password" id="signin-password" placeholder="Your password" autocomplete="current-password" required/>
+            <button type="button" class="pwd-toggle" onclick="togglePwd('signin-password',this)" title="Show/hide password">
+              <svg id="eye-signin" width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" stroke="#94A3B8" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke="#94A3B8" stroke-width="1.5"/></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" id="signin-btn">
+          <div class="spinner"></div>
+          <span class="btn-text">Sign In to Dashboard</span>
+        </button>
+      </form>
+
+      <div class="divider">or continue with</div>
+      <button class="btn-submit" style="background:var(--g50);color:var(--navy);border:1.5px solid var(--g200)" onclick="handleGoogleAuth()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23Z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84Z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53Z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+    </div>
+
+    <!-- ─ SIGN UP PANEL ─ -->
+    <div class="panel" id="panel-signup">
+      <h1 class="form-title">Create your account</h1>
+      <p class="form-sub">Get started with WindSense AI — free 90-day pilot</p>
+
+      <form id="signup-form" onsubmit="handleSignUp(event)">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="signup-fname">First name</label>
+            <input type="text" id="signup-fname" placeholder="Jane" autocomplete="given-name" required/>
+          </div>
+          <div class="form-group">
+            <label for="signup-lname">Last name</label>
+            <input type="text" id="signup-lname" placeholder="Smith" autocomplete="family-name" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="signup-company">Company / Organisation</label>
+          <input type="text" id="signup-company" placeholder="Acme Wind Energy Ltd" required/>
+        </div>
+        <div class="form-group">
+          <label for="signup-email">Work email</label>
+          <input type="email" id="signup-email" placeholder="you@company.com" autocomplete="email" required/>
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <div class="pwd-wrap">
+            <input type="password" id="signup-password" placeholder="Min. 8 characters" autocomplete="new-password" required oninput="checkStrength(this.value)"/>
+            <button type="button" class="pwd-toggle" onclick="togglePwd('signup-password',this)" title="Show/hide password">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" stroke="#94A3B8" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke="#94A3B8" stroke-width="1.5"/></svg>
+            </button>
+          </div>
+          <div class="pwd-strength" id="pwd-strength">
+            <div class="pwd-strength-bar"><div class="pwd-strength-fill" id="pwd-fill"></div></div>
+            <div class="pwd-strength-label" id="pwd-label"></div>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" id="signup-btn">
+          <div class="spinner"></div>
+          <span class="btn-text">Create Account &amp; Access Dashboard</span>
+        </button>
+      </form>
+
+      <p class="terms">
+        By creating an account you agree to our
+        <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.<br/>
+        Your SCADA data is encrypted and never shared with third parties.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── RESET PASSWORD SECTION ────────────────────────────────── -->
+  <div id="reset-section" style="display:none">
+    <button class="reset-back" onclick="showAuth()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M9 3L5 7l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back to sign in
+    </button>
+    <h1 class="form-title">Reset password</h1>
+    <p class="form-sub">We'll email you a reset link</p>
+    <div class="alert" id="reset-alert"></div>
+    <div id="reset-success-state" class="success-state">
+      <div class="success-icon">
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M4 4l16 16M4 20L20 4" stroke="#16A34A" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <form id="reset-form" onsubmit="handleReset(event)">
+      <div class="form-group">
+        <label for="reset-email">Email address</label>
+        <input type="email" id="reset-email" placeholder="you@company.com" required/>
+      </div>
+      <button type="submit" class="btn-submit" id="reset-btn">
+        <div class="spinner"></div>
+        <span class="btn-text">Send Reset Link</span>
+      </button>
+    </form>
+  </div>
+
+  <div class="form-footer">
+    <span>© 2026 WindSense AI · ivenTUre</span>
+    <div style="display:flex;gap:16px">
+      <a href="#">Privacy</a>
+      <a href="#">Security</a>
+      <a href="index.html">← Back to site</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── Supabase init ─────────────────────────────────────────────── */
+const { createClient } = supabase;
+let sb = null;
+
+function initSupabase() {
+  if (SUPABASE_URL === "YOUR_SUPABASE_URL_HERE") {
+    showDemoMode();
+    return false;
+  }
+  try {
+    sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  } catch(e) {
+    showAlert('global-alert','error','Configuration error. Check config.js.');
+    return false;
+  }
+}
+
+/* Demo mode — works without Supabase keys for UI testing */
+function showDemoMode() {
+  showAlert('global-alert','info',
+    '⚙️  Demo mode — Supabase keys not yet configured in config.js. ' +
+    'Auth flows are simulated. See config.js for setup instructions.');
+}
+
+/* ─── Tab switching ─────────────────────────────────────────────── */
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  hideAlert('global-alert');
+}
+
+/* ─── Show/hide sections ────────────────────────────────────────── */
+function showReset() {
+  document.getElementById('auth-section').style.display = 'none';
+  document.getElementById('reset-section').style.display = 'block';
+}
+function showAuth() {
+  document.getElementById('reset-section').style.display = 'none';
+  document.getElementById('auth-section').style.display = 'block';
+}
+
+/* ─── Alert helpers ─────────────────────────────────────────────── */
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = 'alert show ' + type;
+  el.innerHTML = `<svg width="16" height="16" fill="none" viewBox="0 0 16 16" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3M8 10v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>${msg}`;
+}
+function hideAlert(id) {
+  const el = document.getElementById(id);
+  if(el) { el.className = 'alert'; el.innerHTML = ''; }
+}
+
+/* ─── Button loading state ──────────────────────────────────────── */
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.classList.toggle('loading', loading);
+}
+
+/* ─── Password toggle ───────────────────────────────────────────── */
+function togglePwd(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btn.querySelector('svg circle')?.setAttribute('opacity', show ? '0' : '1');
+}
+
+/* ─── Password strength ─────────────────────────────────────────── */
+function checkStrength(val) {
+  const wrap = document.getElementById('pwd-strength');
+  const fill  = document.getElementById('pwd-fill');
+  const label = document.getElementById('pwd-label');
+  if (!val) { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (val.length >= 12) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { w:'20%', c:'#DC2626', t:'Too weak' },
+    { w:'40%', c:'#DC2626', t:'Weak' },
+    { w:'60%', c:'#D97706', t:'Fair' },
+    { w:'80%', c:'#16A34A', t:'Strong' },
+    { w:'100%',c:'#16A34A', t:'Very strong' },
+  ];
+  const l = levels[Math.min(score, 4)];
+  fill.style.width = l.w;
+  fill.style.background = l.c;
+  label.textContent = l.t;
+  label.style.color = l.c;
+}
+
+/* ─── Sign In ───────────────────────────────────────────────────── */
+async function handleSignIn(e) {
+  e.preventDefault();
+  hideAlert('global-alert');
+  const email = document.getElementById('signin-email').value.trim();
+  const pwd   = document.getElementById('signin-password').value;
+
+  if (!initSupabase()) {
+    // Demo mode — simulate redirect
+    setLoading('signin-btn', true);
+    await delay(1200);
+    setLoading('signin-btn', false);
+    showAlert('global-alert','success','✓ Demo login successful! Redirecting to dashboard…');
+    await delay(1000);
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  setLoading('signin-btn', true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+  setLoading('signin-btn', false);
+
+  if (error) {
+    const msg = error.message.includes('Invalid') ? 'Incorrect email or password.' : error.message;
+    showAlert('global-alert','error', msg);
+    document.getElementById('signin-email').classList.add('error');
+    document.getElementById('signin-password').classList.add('error');
+    return;
+  }
+  window.location.href = 'dashboard.html';
+}
+
+/* ─── Sign Up ───────────────────────────────────────────────────── */
+async function handleSignUp(e) {
+  e.preventDefault();
+  hideAlert('global-alert');
+  const fname   = document.getElementById('signup-fname').value.trim();
+  const lname   = document.getElementById('signup-lname').value.trim();
+  const company = document.getElementById('signup-company').value.trim();
+  const email   = document.getElementById('signup-email').value.trim();
+  const pwd     = document.getElementById('signup-password').value;
+
+  if (pwd.length < 8) {
+    showAlert('global-alert','error','Password must be at least 8 characters.');
+    return;
+  }
+
+  if (!initSupabase()) {
+    setLoading('signup-btn', true);
+    await delay(1400);
+    setLoading('signup-btn', false);
+    showAlert('global-alert','success','✓ Demo account created! Redirecting to dashboard…');
+    await delay(1000);
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  setLoading('signup-btn', true);
+  const { data, error } = await sb.auth.signUp({
+    email, password: pwd,
+    options: { data: { first_name: fname, last_name: lname, company } }
+  });
+  setLoading('signup-btn', false);
+
+  if (error) {
+    showAlert('global-alert','error', error.message);
+    return;
+  }
+  if (data?.user?.identities?.length === 0) {
+    showAlert('global-alert','error','An account with this email already exists. Please sign in.');
+    return;
+  }
+  showAlert('global-alert','success',
+    '✓ Account created! Check your email for a confirmation link, then sign in.');
+  document.getElementById('signup-form').reset();
+  setTimeout(() => switchTab('signin'), 2000);
+}
+
+/* ─── Google OAuth ──────────────────────────────────────────────── */
+async function handleGoogleAuth() {
+  /* ── DEMO MODE (no Supabase keys yet) ─────────────────────────── */
+  if (SUPABASE_URL === "YOUR_SUPABASE_URL_HERE") {
+    const btn = document.querySelector('button[onclick="handleGoogleAuth()"]');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner" style="display:block;border-top-color:#09192A"></div>'; }
+    showAlert('global-alert','info','Demo mode — simulating Google sign-in…');
+    await delay(1200);
+    showAlert('global-alert','success','✓ Google sign-in successful (demo). Redirecting…');
+    await delay(700);
+    window.location.href = 'dashboard.html';
+    return;
+  }
+  /* ── REAL GOOGLE OAUTH (Supabase configured) ──────────────────── */
+  if (!initSupabase()) return;
+  const btn = document.querySelector('button[onclick="handleGoogleAuth()"]');
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner" style="display:block"></div>'; }
+  try {
+    // Use localhost if running as a local file (file://) — avoids file:/// redirect issue
+    const origin = window.location.protocol === 'file:'
+      ? 'http://localhost:3000'
+      : window.location.origin;
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: origin + '/dashboard.html' }
+    });
+    if (error) throw error;
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+    const msg = (e.message || '').toLowerCase().includes('not enabled') || (e.message || '').includes('provider')
+      ? 'Google login is not enabled yet in your Supabase project. Go to Supabase Dashboard → Authentication → Providers → Google → toggle ON.'
+      : 'Google sign-in failed: ' + (e.message || e);
+    showAlert('global-alert', 'error', msg);
+  }
+}
+
+/* ─── Reset Password ────────────────────────────────────────────── */
+async function handleReset(e) {
+  e.preventDefault();
+  hideAlert('reset-alert');
+  const email = document.getElementById('reset-email').value.trim();
+
+  if (!initSupabase()) {
+    setLoading('reset-btn', true);
+    await delay(1000);
+    setLoading('reset-btn', false);
+    showAlert('reset-alert','success','✓ Reset link sent to ' + email + ' (demo mode — no email sent)');
+    document.getElementById('reset-form').style.display = 'none';
+    return;
+  }
+
+  setLoading('reset-btn', true);
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/login.html'
+  });
+  setLoading('reset-btn', false);
+
+  if (error) {
+    showAlert('reset-alert','error', error.message);
+    return;
+  }
+  showAlert('reset-alert','success','✓ Reset link sent. Check your email inbox.');
+  document.getElementById('reset-form').style.display = 'none';
+}
+
+/* ─── Auth guard — redirect if already logged in ────────────────── */
+async function checkAlreadyLoggedIn() {
+  if (!initSupabase() || !sb) return;
+  const { data } = await sb.auth.getSession();
+  if (data?.session) window.location.href = 'dashboard.html';
+}
+
+/* ─── Handle URL hash (password reset return) ───────────────────── */
+function handleAuthCallback() {
+  const hash = window.location.hash;
+  if (hash.includes('type=recovery')) {
+    showAlert('global-alert','info','Enter your new password below.');
+  }
+}
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+/* Init */
+document.addEventListener('DOMContentLoaded', () => {
+  handleAuthCallback();
+  checkAlreadyLoggedIn();
+  // Clear error states on input
+  document.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => inp.classList.remove('error'));
+  });
+});
+</script>
+</body>
+</html>
